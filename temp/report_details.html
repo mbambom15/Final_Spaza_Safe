@@ -1,0 +1,20 @@
+<form action="/update_report_status/{{ report.report_id }}" method="POST">
+    <div class="form-group">
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+            <option value="PENDING" {% if report.status == 'PENDING' %}selected{% endif %}>Pending</option>
+            <option value="INVESTIGATING" {% if report.status == 'INVESTIGATING' %}selected{% endif %}>Investigating</option>
+            <option value="RESOLVED" {% if report.status == 'RESOLVED' %}selected{% endif %}>Resolved</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label for="notes">Investigation Notes:</label>
+        <textarea id="notes" name="notes">{% if report.investigation_notes %}{{ report.investigation_notes }}{% endif %}</textarea>
+    </div>
+    
+    <div class="form-actions">
+        <button type="button" class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-save">Save Changes</button>
+    </div>
+</form>

@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>spaza shop</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    /* Add this to the existing styles */
+    #product-info-section .modal-card {
+      color: white;
+      /* Set all text to white */
+    }
+
+    #product-info-section .modal-card h3,
+    #product-info-section .modal-card h4,
+    #product-info-section .modal-card p {
+      color: white !important;
+      /* Force white text */
+    }
+
+    #product-info-section .modal-card .close-btn {
+      color: #e9e9e9 !important;
+      /* Lighten close button */
+    }
+
+    /* Keep status colors visible */
+    #info-expiry-status {
+      font-weight: bold;
+      padding: 5px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+
+    .col-md-2-4 {
+      flex: 0 0 auto;
+      width: 20%;
+    }
+
+    /* New dashboard styles */
+    #dashboard-content {
+      display: block;
+    }
+
+    .summary-card {
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s;
+      height: 100%;
+    }
+
+    .summary-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .card-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+
+    .card-icon {
+      font-size: 2rem;
+      margin-bottom: 15px;
+    }
+
+    .chart-container {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-container,
+    .summary-card,
+    .card,
+    .modal-card {
+      color: #333;
+      /* Dark text for light backgrounds */
+    }
+
+    /* Fix for white text on light backgrounds */
+    .bg-warning.text-dark {
+      color: #333 !important;
+    }
+
+    .low-stock-item {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      transition: background-color 0.2s;
+    }
+
+    .low-stock-item:hover {
+      background-color: #f8f9fa;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .status-low {
+      background-color: #dc3545;
+    }
+
+    .status-medium {
+      background-color: #ffc107;
+    }
+
+    .status-high {
+      background-color: #28a745;
+    }
+
+    /* Expiry section styles */
+    #expiry-section .alert {
+      border-radius: 8px;
+      margin-bottom: 20px;
+      padding: 15px;
+    }
+
+    #expiry-section .alert h4 {
+      margin-bottom: 15px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+      padding-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #expiry-section .badge {
+      font-size: 1rem;
+    }
+
+    #expiry-section .card {
+      transition: transform 0.2s;
+    }
+
+    #expiry-section .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    #expiry-section .btn-danger {
+      margin-top: 10px;
+    }
+
+    body {
+      overflow-x: hidden;
+      background: #1a171f;
+      color: whitesmoke;
+    }
+
+    #sidebar {
+      height: 100vh;
+      width: 250px;
+      background: #343a40;
+      color: white;
+      transition: all 0.3s;
+    }
+
+    #sidebar.collapsed {
+      width: 70px;
+    }
+
+    #sidebar .nav-link {
+      color: white;
+      white-space: nowrap;
+    }
+
+    #sidebar .nav-link:hover {
+      background: #495057;
+    }
+
+    #content {
+      transition: margin-left 0.3s;
+      margin-left: 250px;
+    }
+
+    #sidebar.collapsed~#content {
+      margin-left: 70px;
+    }
+
+    .toggle-btn {
+      position: fixed;
+      top: 15px;
+      left: 260px;
+      z-index: 1000;
+    }
+
+    #sidebar.collapsed~.toggle-btn {
+      left: 80px;
+    }
+
+    .sidebar-icon {
+      display: inline-block;
+      width: 24px;
+      text-align: center;
+    }
+
+    #sidebar.collapsed .sidebar-text {
+      display: none;
+    }
+
+    /* Status bar styles */
+    .status-bar {
+      height: 8px;
+      background: #e9ecef;
+      border-radius: 4px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .status-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    .status-fill.low {
+      background: #dc3545;
+    }
+
+    .status-fill.medium {
+      background: #ffc107;
+    }
+
+    .status-fill.high {
+      background: #28a745;
+    }
+
+    /* Modal overlay styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 30px 24px 24px 24px;
+      min-width: 300px;
+      max-width: 90vw;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      position: relative;
+      text-align: center;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 18px;
+      font-size: 2rem;
+      color: #888;
+      cursor: pointer;
+    }
+
+    #product-info-section {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(144, 140, 140, 0.5);
+      z-index: 1000;
+      /* Increased from 100 to 1000 */
+      display: none;
+      /* Changed from list-item to none */
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      /* Changed from 80% to 100% */
+    }
+
+    #product-info-section .modal-card {
+      background: #3d3c3c;
+      border-radius: 10px;
+      padding: 30px 24px 24px 24px;
+      min-width: 300px;
+      max-width: 90vw;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      position: relative;
+      text-align: center;
+    }
+
+    #product-info-section .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 18px;
+      font-size: 2rem;
+      color: #4a4848;
+      cursor: pointer;
+    }
+
+    /* Added styles for search functionality */
+    .search-container {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #6c757d;
+    }
+
+    .search-input {
+      padding-left: 40px;
+    }
+
+    .clear-search {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      color: #6c757d;
+      display: none;
+    }
+
+    .search-results-info {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 30px;
+      color: #6c757d;
+      font-style: italic;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Sidebar -->
+  <div id="sidebar" class="d-flex flex-column p-3 position-fixed">
+    <a href="#" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+      <span class="fs-4 sidebar-text">Spaza🏠</span>
+    </a>
+    <hr>
+    <ul class="nav nav-pills flex-column mb-auto">
+      <li class="nav-item">
+        <a href="#" class="nav-link text-white active" onclick="showDashboard(); return false;">
+          <span class="sidebar-icon">📊</span> <span class="sidebar-text">Dashboard</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="nav-link text-white" onclick="showStock(); return false;">
+          <span class="sidebar-icon">📦</span> <span class="sidebar-text">Stock</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="nav-link text-white" onclick="showAvailableProducts(); return false;">
+          <span class="sidebar-icon">🛒</span> <span class="sidebar-text">Shop Inventory</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="nav-link text-white" onclick="showExpiryCheck(); return false;">
+          <span class="sidebar-icon">⚠️</span> <span class="sidebar-text">Expiry Check</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="nav-link text-white" onclick="window.location.href='/spaza_owner_report'">
+          <span class="sidebar-icon">📊</span>
+          <span class="sidebar-text">Generate Report</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="nav-link text-white" onclick="logoutSpazaOwner()">
+          <span class="sidebar-icon">🟢</span> <span class="sidebar-text">Logout</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+
+  <!-- Toggle Button -->
+  <button class="btn btn-dark toggle-btn" onclick="toggleSidebar()">☰</button>
+
+  <!-- Main Content -->
+  <div id="content" class="p-4">
+    <!-- Dashboard Content (shown by default) -->
+    <div id="dashboard-content">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Dashboard</h2>
+        <div class="d-flex">
+          <button class="btn btn-sm btn-outline-secondary me-2" onclick="refreshDashboard()">
+            <i class="bi bi-arrow-repeat"></i> Refresh
+          </button>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="timeRangeDropdown"
+              data-bs-toggle="dropdown">
+              Last 30 days
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="timeRangeDropdown">
+              <li><a class="dropdown-item" href="#" onclick="changeTimeRange('week')">Last 7 days</a></li>
+              <li><a class="dropdown-item" href="#" onclick="changeTimeRange('month')">Last 30 days</a></li>
+              <li><a class="dropdown-item" href="#" onclick="changeTimeRange('quarter')">Last 90 days</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <!-- Summary Cards -->
+      <div class="row mb-4">
+        <div class="col-md-2-4 mb-3"> <!-- Custom column size for 5 cards -->
+          <div class="summary-card bg-primary text-white p-3 text-center">
+            <div class="card-icon">💰</div>
+            <div class="card-title">Total Value</div>
+            <div class="card-value" id="total-value">R 0.00</div>
+            <div class="card-change text-success" id="value-change">+0% from last month</div>
+          </div>
+        </div>
+        <div class="col-md-2-4 mb-3">
+          <div class="summary-card bg-success text-white p-3 text-center">
+            <div class="card-icon">📦</div>
+            <div class="card-title">Total Items</div>
+            <div class="card-value" id="total-items">0</div>
+            <div class="card-change" id="items-change">0 items in stock</div>
+          </div>
+        </div>
+        <div class="col-md-2-4 mb-3">
+          <div class="summary-card bg-warning text-dark p-3 text-center">
+            <div class="card-icon">⚠️</div>
+            <div class="card-title">Low Stock</div>
+            <div class="card-value" id="low-stock-count">0</div>
+            <div class="card-change" id="stock-change">Items needing attention</div>
+          </div>
+        </div>
+        <div class="col-md-2-4 mb-3">
+          <div class="summary-card bg-danger text-white p-3 text-center">
+            <div class="card-icon">⏳</div>
+            <div class="card-title">Expiring Soon</div>
+            <div class="card-value" id="expiring-count">0</div>
+            <div class="card-change">Items expiring in 7 days</div>
+          </div>
+        </div>
+        <div class="col-md-2-4 mb-3"> <!-- New Expired Card -->
+          <div class="summary-card bg-dark text-white p-3 text-center">
+            <div class="card-icon">⌛</div>
+            <div class="card-title">Expired</div>
+            <div class="card-value" id="expired-count-dash">0</div>
+            <div class="card-change">Items already expired</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts and Low Stock Section -->
+      <div class="row">
+        <div class="col-md-4">
+          <div class="chart-container">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h4 class="mb-0">Low Stock Items</h4>
+              <span class="badge bg-danger" id="low-stock-badge">0</span>
+            </div>
+            <div id="low-stock-list" class="mt-3">
+              <div class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+                <div>Loading low stock items...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-container mt-4">
+            <h4>Top Products</h4>
+            <div id="top-products-list" class="mt-3">
+              <div class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+                <div>Loading top products...</div>
+              </div>
+            </div>
+            <div class="chart-container mt-4">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4 class="mb-0">Product Analytics</h4>
+              </div>
+
+              <div id="analytics-container">
+                <div class="mt-3">
+                  <h5>Most Popular Products</h5>
+                  <div id="popular-products-list"></div>
+                </div>
+
+                <div class="mt-4">
+                  <h5>Recent Customer Activity</h5>
+                  <div id="recent-activity-list" style="max-height: 300px; overflow-y: auto;"></div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Available Products Section (hidden by default) -->
+    <div id="available-products-section" style="display:none;">
+      <button class="btn btn-secondary mb-3" onclick="showDashboard()">Back to Dashboard</button>
+
+      <h2>Available Products</h2>
+
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="availableSearchInput" class="form-control search-input"
+          placeholder="Search by name, barcode, price...">
+        <span class="clear-search" onclick="clearAvailableSearch()">✕</span>
+        <div class="search-results-info" id="availableSearchInfo"></div>
+      </div>
+
+      <div class="row" id="product-list">
+        <!-- Products will go here -->
+      </div>
+    </div>
+
+    <!-- Stock Section (hidden by default) -->
+    <div id="stock-section" style="display:none;">
+      <button class="btn btn-secondary mb-3" onclick="showDashboard()">Back to Dashboard</button>
+
+      <h2>Stock</h2>
+
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="stockSearchInput" class="form-control search-input"
+          placeholder="Search by name, barcode, price...">
+        <span class="clear-search" onclick="clearStockSearch()">✕</span>
+        <div class="search-results-info" id="stockSearchInfo"></div>
+      </div>
+
+      <div class="row" id="stock-list">
+        <!-- Stock items will go here -->
+      </div>
+    </div>
+
+    <!-- Product Info Modal/Section -->
+    <div id="product-info-section" style="display:none;">
+      <div class="modal-card">
+        <span class="close-btn" onclick="closeProductInfo()">&times;</span>
+        <div class="row">
+          <!-- Left side for product details -->
+          <div class="col-md-6">
+            <h4 id="info-name"></h4>
+            <img id="info-image" src="" alt="Product Image"
+              style="width:100%; max-width:150px; height:150px; object-fit:cover;">
+            <p id="info-barcode"></p>
+            <p id="info-price"></p>
+            <p id="info-expiry"></p>
+            <p id="info-quantity"></p>
+          </div>
+          <!-- Right side for manufacturer details -->
+          <div class="col-md-6">
+            <h3>Manufacturer Info</h3>
+            <p id="info-Manufacture"></p>
+            <p id="info-Manufacture1"></p>
+            <p id="info-manu"></p>
+          </div>
+        </div>
+        <!-- Bottom center: Sale Price, Quantity input and Buy Stock button -->
+        <div style="display: flex; justify-content: center; margin-top: 24px;">
+          <div class="quantity-input" id="modal-quantity-input">
+            <label for="modal-sale-price">Sale Price:</label>
+            <input type="number" id="modal-sale-price" min="0" step="0.01" class="form-control"
+              style="width: 100px; display: inline-block; margin-right: 10px;">
+            <label for="modal-qty">Quantity:</label>
+            <input type="number" id="modal-qty" min="1" value="1" class="form-control"
+              style="width: 80px; display: inline-block; margin-right: 10px;">
+            <button class="btn btn-primary mt-2" onclick="addToCartFromModal()">Buy Stock</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Expiry Check Section (hidden by default) -->
+    <div id="expiry-section" style="display:none;">
+      <button class="btn btn-secondary mb-3" onclick="showDashboard()">Back to Dashboard</button>
+      <h2>Product Expiry Status</h2>
+
+      <div class="input-group mb-3">
+        <label class="input-group-text" for="expiryDaysThreshold">Days Threshold:</label>
+        <select class="form-select" id="expiryDaysThreshold" onchange="loadExpiryData()">
+          <option value="3">3 days</option>
+          <option value="7" selected>7 days</option>
+          <option value="14">14 days</option>
+          <option value="30">30 days</option>
+        </select>
+      </div>
+
+      <div class="alert alert-danger">
+        <h4>Expired Products <span class="badge bg-dark" id="expired-count">0</span></h4>
+        <div id="expired-products-list" class="row"></div>
+      </div>
+
+      <div class="alert alert-warning">
+        <h4>Expiring Soon <span class="badge bg-dark" id="expiring-count">0</span></h4>
+        <div id="expiring-products-list" class="row"></div>
+      </div>
+
+      <div class="alert alert-success">
+        <h4>Safe Products <span class="badge bg-dark" id="safe-count">0</span></h4>
+        <div id="safe-products-list" class="row"></div>
+      </div>
+    </div>
+    <script>
+      function addToCartFromModal() {
+        const salePrice = document.getElementById('modal-sale-price').value;
+        const quantity = document.getElementById('modal-qty').value;
+        const barcode = document.getElementById('info-barcode').textContent.replace('Barcode: ', '');
+
+        // Validate inputs
+        if (!salePrice || salePrice <= 0 || !quantity || quantity <= 0) {
+          alert('Please enter valid sale price and quantity.');
+          return;
+        }
+
+        // Get max available quantity from the product info (you'll need to add this to your viewProduct function)
+        const maxQuantity = parseInt(document.getElementById('info-quantity').textContent.replace('Available: ', '')) || 0;
+
+        if (parseInt(quantity) > maxQuantity) {
+          alert(`Cannot add more than ${maxQuantity} units. Only ${maxQuantity} available in system.`);
+          return;
+        }
+
+        const payload = {
+          prod_barcode: barcode,
+          shop_price: parseFloat(salePrice),
+          stock_quantity: parseInt(quantity, 10)
+        };
+
+        console.log("Sending payload:", payload);
+
+        fetch('/add_to_shop_inventory', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        })
+          .then(response => {
+            if (!response.ok) {
+              return response.json().then(err => {
+                throw new Error(err.message || 'Failed to add to inventory');
+              });
+            }
+            return response.json();
+          })
+          .then(data => {
+            if (data.success) {
+              alert('Product added to inventory successfully!');
+              closeProductInfo();
+              showAvailableProducts(); // Refresh inventory display
+            } else {
+              alert('Failed: ' + (data.message || 'Unknown error'));
+            }
+          })
+          .catch(error => {
+            console.error('Error', error);
+            alert('Error: ' + error.message);
+          });
+      }
+    </script>
+  </div>
+
+  <script>
+    // Fixed JavaScript code
+
+    let allStockProducts = [];
+    let allAvailableProducts = [];
+
+    function initSearch() {
+      // Available products search
+      document.getElementById('availableSearchInput').addEventListener('input', function () {
+        searchAvailableProducts();
+        updateClearButton(this);
+      });
+
+      // Stock products search
+      document.getElementById('stockSearchInput').addEventListener('input', function () {
+        searchStockProducts();
+        updateClearButton(this);
+      });
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          const target = this.getAttribute('onclick').match(/show\w+/)[0];
+          window[target]();
+        });
+      });
+    }
+
+    function updateClearButton(input) {
+      const clearBtn = input.nextElementSibling;
+      clearBtn.style.display = input.value ? 'block' : 'none';
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('collapsed');
+
+      // Update toggle button position
+      const toggleBtn = document.querySelector('.toggle-btn');
+      toggleBtn.style.left = sidebar.classList.contains('collapsed') ? '80px' : '260px';
+    }
+
+
+
+    function searchProducts() {
+      const query = document.getElementById('searchInput').value.trim();
+      fetch(`/search_products?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success && data.products.length > 0) {
+            renderStock(data.products);
+          } else {
+            document.getElementById('stock-list').innerHTML = '<div class="text-danger">No products found.</div>';
+          }
+        })
+        .catch(() => {
+          document.getElementById('stock-list').innerHTML = '<div class="text-danger">Failed to search products.</div>';
+        });
+    }
+
+    function searchAvailableProducts() {
+      const query = document.getElementById('availableSearchInput').value.trim().toLowerCase();
+      const resultsInfo = document.getElementById('availableSearchInfo');
+
+      if (!query) {
+        renderProducts(allAvailableProducts);
+        resultsInfo.textContent = `Showing all ${allAvailableProducts.length} products`;
+        return;
+      }
+
+      const filtered = allAvailableProducts.filter(p =>
+        (p.prod_name && p.prod_name.toLowerCase().includes(query)) ||
+        (p.prod_barcode && p.prod_barcode.toLowerCase().includes(query)) ||
+        (p.shop_price && String(p.shop_price).includes(query)) ||
+        (p.last_updated && new Date(p.last_updated).toLocaleDateString().includes(query))
+      );
+
+      renderProducts(filtered);
+      resultsInfo.textContent = filtered.length
+        ? `Found ${filtered.length} matching products`
+        : 'No products match your search';
+    }
+
+    function clearAvailableSearch() {
+      document.getElementById('availableSearchInput').value = "";
+      document.querySelector('#availableSearchInput + .clear-search').style.display = 'none';
+      renderProducts(allAvailableProducts);
+      document.getElementById('availableSearchInfo').textContent =
+        `Showing all ${allAvailableProducts.length} products`;
+    }
+
+    function searchStockProducts() {
+      const query = document.getElementById('stockSearchInput').value.trim().toLowerCase();
+      const resultsInfo = document.getElementById('stockSearchInfo');
+
+      if (!query) {
+        renderStock(allStockProducts);
+        resultsInfo.textContent = `Showing all ${allStockProducts.length} products`;
+        return;
+      }
+
+      const filtered = allStockProducts.filter(p =>
+        (p.prod_name && p.prod_name.toLowerCase().includes(query)) ||
+        (p.prod_barcode && p.prod_barcode.toLowerCase().includes(query)) ||
+        (p.prod_price && String(p.prod_price).includes(query)) ||
+        (p.prod_expiry_date && p.prod_expiry_date.toLowerCase().includes(query))
+      );
+
+      renderStock(filtered);
+      resultsInfo.textContent = filtered.length
+        ? `Found ${filtered.length} matching products`
+        : 'No products match your search';
+    }
+
+    function clearStockSearch() {
+      document.getElementById('stockSearchInput').value = '';
+      document.querySelector('#stockSearchInput + .clear-search').style.display = 'none';
+      renderStock(allStockProducts);
+      document.getElementById('stockSearchInfo').textContent =
+        `Showing all ${allStockProducts.length} products`;
+    }
+
+    function showAvailableProducts() {
+      document.getElementById('dashboard-content').style.display = 'none';
+      document.getElementById('stock-section').style.display = 'none';
+      document.getElementById('expiry-section').style.display = 'none';
+      document.getElementById('product-info-section').style.display = 'none';
+      document.getElementById('available-products-section').style.display = 'block';
+
+      fetch('/get_shop_inventory')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            if (data.inventory && data.inventory.length > 0) {
+              allAvailableProducts = data.inventory;
+              renderProducts(allAvailableProducts);
+              document.getElementById('availableSearchInfo').textContent =
+                `Showing all ${allAvailableProducts.length} products`;
+            } else {
+              document.getElementById('product-list').innerHTML =
+                '<div class="col-12 text-info">Your inventory is empty. Add some products!</div>';
+            }
+          } else {
+            console.error("Server error:", data);
+            document.getElementById('product-list').innerHTML =
+              '<div class="text-danger">Error: ${data.message || "Unknown error"}</div>';
+          }
+        })
+        .catch(error => {
+          console.error("Fetch error:", error);
+          document.getElementById('product-list').innerHTML =
+            '<div class="text-danger">Failed to load: ${error.message}</div>';
+        });
+    }
+
+
+    function renderProducts(products) {
+      const container = document.getElementById('product-list');
+      container.innerHTML = "";
+
+      if (!products || products.length === 0) {
+        container.innerHTML = '<div class="col-12 text-warning">No products in your inventory yet.</div>';
+        return;
+      }
+
+      products.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'col-md-3 mb-4';
+        card.innerHTML = `
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">${p.prod_name || 'Product'}</h5>
+                    <p class="card-text"><b>Barcode:</b> ${p.prod_barcode}</p>
+                    <img src="${p.prod_image_url || '/static/images/img4.png'}"
+                         class="card-img-top"
+                         alt="${p.prod_name || ''}"
+                         style="height: 150px; object-fit: cover;">
+                    <p class="card-text"><b>Your Price:</b> R${parseFloat(p.shop_price || 0).toFixed(2)}</p>
+                    <p class="card-text"><b>Stock:</b> ${p.stock_quantity}</p>
+                    <p class="card-text"><small>Last updated: ${new Date(p.last_updated).toLocaleString()}</small></p>
+                    <button class="btn btn-info mt-2"
+                            onclick="viewProduct('${p.prod_barcode}')">
+                        View/Edit
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Dashboard functions
+    function loadDashboard() {
+      // Fetch dashboard summary data
+      fetch('/api/dashboard/summary')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Update summary cards
+            document.getElementById('total-value').textContent =
+              `R ${parseFloat(data.total_value || 0).toFixed(2)}`;
+            document.getElementById('total-items').textContent =
+              data.total_items || 0;
+            document.getElementById('low-stock-count').textContent =
+              data.low_stock_count || 0;
+            document.getElementById('expiring-count').textContent =
+              data.expiring_soon_count || 0;
+            document.getElementById('expired-count-dash').textContent = // Add this line
+              data.expired_count || 0; // Display expired count from the summary data
+
+            // Update top products
+            renderTopProducts(data.top_products || []);
+          } else {
+            console.error('Dashboard summary error:', data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error loading dashboard summary:', error);
+        });
+
+      // Fetch low stock items
+      fetch('/api/dashboard/low_stock')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            renderLowStockItems(data.low_stock_items || []);
+          } else {
+            console.error('Low stock items error:', data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error loading low stock items:', error);
+        });
+
+      // Fetch analytics data
+      fetch('/api/dashboard/analytics')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            renderPopularProducts(data.popular_products || []);
+            renderRecentActivity(data.recent_activity || []);
+          } else {
+            console.error('Analytics error:', data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error loading analytics:', error);
+        });
+    }
+
+    function renderTopProducts(products) {
+      const container = document.getElementById('top-products-list');
+      container.innerHTML = '';
+
+      if (!products || products.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-muted">No top products</div>';
+        return;
+      }
+
+      products.forEach(product => {
+        const totalValue = parseFloat(product.total_value) || 0;
+        const productElement = document.createElement('div');
+        productElement.className = 'mb-3';
+        productElement.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${product.prod_name}</strong>
+                    <div class="text-muted">Quantity: ${product.total_quantity}</div>
+                </div>
+                <div class="text-end">
+                    <div>Value: R${totalValue.toFixed(2)}</div>
+                </div>
+            </div>
+            <div class="progress" style="height: 8px;">
+                <div class="progress-bar" role="progressbar" 
+                     style="width: ${Math.min(100, (totalValue / 1000) * 100)}%;" 
+                     aria-valuenow="${totalValue}" 
+                     aria-valuemin="0" 
+                     aria-valuemax="1000">
+                </div>
+            </div>
+        `;
+        container.appendChild(productElement);
+      });
+    }
+
+    // Add these new functions
+    function renderPopularProducts(products) {
+      const container = document.getElementById('popular-products-list');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      if (!products || products.length === 0) {
+        container.innerHTML = '<div class="text-muted">No analytics data available</div>';
+        return;
+      }
+
+      products.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'd-flex justify-content-between mb-2';
+        item.innerHTML = `
+            <div>
+                <strong>${p.prod_name}</strong>
+                <div class="text-muted">Interactions: ${p.interaction_count}</div>
+            </div>
+            <div>
+                <span class="badge bg-success">${p.purchase_count} purchases</span>
+                <span class="badge bg-info">${p.cart_count} in carts</span>
+            </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderRecentActivity(activities) {
+      const container = document.getElementById('recent-activity-list');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      if (!activities || activities.length === 0) {
+        container.innerHTML = '<div class="text-muted">No recent activity</div>';
+        return;
+      }
+
+      activities.forEach(a => {
+        const item = document.createElement('div');
+        item.className = 'mb-2 p-2 border-bottom';
+
+        const actionIcon = a.action_type === 'PURCHASED' ? '🛒' : '➕';
+        const actionClass = a.action_type === 'PURCHASED' ? 'text-success' : 'text-info';
+
+        item.innerHTML = `
+            <div class="d-flex justify-content-between">
+                <span class="${actionClass}">${actionIcon} ${a.action_type}</span>
+                <small>${new Date(a.timestamp).toLocaleString()}</small>
+            </div>
+            <div class="text-truncate">${a.prod_name}</div>
+            <small class="text-muted">Customer: ${a.customer_email}</small>
+        `;
+        container.appendChild(item);
+      });
+    }
+    function renderLowStockItems(items) {
+      const container = document.getElementById('low-stock-list');
+      container.innerHTML = '';
+
+      if (!items || items.length === 0) {
+        container.innerHTML = '<div class="text-center py-4 text-muted">No low stock items</div>';
+        return;
+      }
+
+      items.forEach(item => {
+        const itemElement = document.createElement('div');
+        itemElement.className = 'low-stock-item';
+        itemElement.innerHTML = `
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>${item.prod_name}</strong>
+                    <div class="text-muted">Barcode: ${item.prod_barcode}</div>
+                </div>
+                <div class="text-end">
+                    <div>Stock: <span class="text-danger">${item.stock_quantity}</span></div>
+                    <div>Value: R${(item.shop_price * item.stock_quantity).toFixed(2)}</div>
+                </div>
+            </div>
+        `;
+        container.appendChild(itemElement);
+      });
+    }
+
+
+
+
+    function showDashboard() {
+      document.getElementById('available-products-section').style.display = 'none';
+      document.getElementById('stock-section').style.display = 'none';
+      document.getElementById('expiry-section').style.display = 'none';
+      document.getElementById('product-info-section').style.display = 'none';
+      document.getElementById('dashboard-content').style.display = 'block';
+      loadDashboard();
+    }
+
+    function refreshDashboard() {
+      loadDashboard();
+    }
+
+    function changeTimeRange(range) {
+      // Implement time range functionality here
+      console.log("Time range changed to:", range);
+      refreshDashboard();
+    }
+
+    function showStock() {
+      document.getElementById('dashboard-content').style.display = 'none';
+      document.getElementById('available-products-section').style.display = 'none';
+      document.getElementById('expiry-section').style.display = 'none';
+      document.getElementById('product-info-section').style.display = 'none';
+      document.getElementById('stock-section').style.display = 'block';
+
+      fetch('/get_all_products')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            allStockProducts = data.products;
+            renderStock(allStockProducts);
+            document.getElementById('stockSearchInfo').textContent =
+              `Showing all ${allStockProducts.length} products`;
+          } else {
+            document.getElementById('stock-list').innerHTML =
+              '<div class="text-danger">Failed to load stock.' + data.message + '</div>';
+          }
+        })
+        .catch(error => {
+          console.error(error);
+          document.getElementById('stock-list').innerHTML =
+            '<div class="text-danger">Failed to load stock.</div>';
+        });
+    }
+
+    function renderStock(products) {
+      const container = document.getElementById('stock-list');
+      container.innerHTML = '';
+
+      if (!products || products.length === 0) {
+        container.innerHTML = '<div class="col-12 no-results">No products found</div>';
+        return;
+      }
+
+      products.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'col-md-3 mb-4';
+        card.innerHTML = `
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">${p.prod_name || ''}</h5>
+                    <p class="card-text"><b>Barcode:</b> ${p.prod_barcode}</p>
+                    <img src="${p.prod_image_url || '/static/images/img4.png'}" 
+                         class="card-img-top" 
+                         alt="${p.prod_name || ''}">
+                    <p class="card-text">Price: R${p.prod_price}</p>
+                    <div>Expiry: ${p.prod_expiry_date}</div>
+                    <button class="btn btn-success mt-3" 
+                            onclick="viewProduct('${p.prod_barcode}')">
+                        View
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function viewProduct(barcode) {
+      if (!barcode) {
+        alert('Session expired. Please login again');
+        logoutSpazaOwner();
+        return;
+      }
+
+      // Reset form controls
+      const modalPrice = document.getElementById('modal-sale-price');
+      const modalQty = document.getElementById('modal-qty');
+      const modalButton = document.querySelector('#product-info-section button');
+      modalPrice.disabled = false;
+      modalQty.disabled = false;
+      modalButton.disabled = false;
+
+      // Clear previous values
+      modalPrice.value = "";
+      modalQty.value = '1';
+
+      // Show loading state
+      document.getElementById('info-name').textContent = 'Loading...';
+      document.getElementById('info-Manufacture').textContent = "";
+      document.getElementById('info-Manufacture1').textContent = "";
+      document.getElementById('info-manu').textContent = "";
+      document.getElementById('product-info-section').style.display = 'block';
+
+      // Fetch product data
+      fetch(`/get_product_dataspz/${encodeURIComponent(barcode)}`)
+        .then(response => {
+          if (!response.ok) throw new Error('Network response not ok');
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            const p = data.product;
+
+            // Update product info
+            document.getElementById('info-name').textContent = p.prod_name || 'Unnamed Product';
+            document.getElementById('info-barcode').textContent = 'Barcode: ' + (barcode || 'N/A');
+            document.getElementById('info-price').textContent = 'Price: R' + (parseFloat(p.prod_price || 0).toFixed(2));
+            document.getElementById('info-expiry').textContent = 'Expiry: ' + (p.prod_expiry_date || 'Not specified');
+            document.getElementById('info-quantity').textContent = 'Available: ' + (p.prod_quantity || '0');
+            document.getElementById('info-image').src = p.prod_image_url || '/static/images/img4.png';
+
+            // Fetch manufacturer info
+            if (p.license_key) {
+              fetch('/get_manufacturer/' + p.license_key)
+                .then(response => {
+                  if (!response.ok) throw new Error('Manufacturer fetch failed');
+                  return response.json();
+                })
+                .then(manuData => {
+                  if (manuData.success) {
+                    const m = manuData.manufacturer;
+                    document.getElementById('info-Manufacture').textContent = 'Company: ' + (m.company_name || 'N/A');
+                    document.getElementById('info-Manufacture1').textContent = 'Address: ' + (m.address || 'N/A');
+                    document.getElementById('info-manu').textContent = 'Location: ' + (m.location || 'N/A') +
+                      ' | License: ' + (m.license_key || 'N/A');
+                  } else {
+                    document.getElementById('info-Manufacture').textContent = 'Manufacturer info not available';
+                  }
+                })
+                .catch(error => {
+                  console.error('Manufacturer error:', error);
+                  document.getElementById('info-Manufacture').textContent = 'Failed to load manufacturer info';
+                });
+            } else {
+              document.getElementById('info-Manufacture').textContent = 'No manufacturer license';
+            }
+
+            // Handle expiry status
+            const expiryDate = p.prod_expiry_date ? new Date(p.prod_expiry_date) : null;
+            const today = new Date();
+            let expiryStatus = document.getElementById('info-expiry-status');
+
+            if (!expiryStatus) {
+              expiryStatus = document.createElement('div');
+              expiryStatus.id = 'info-expiry-status';
+              expiryStatus.style.fontWeight = 'bold';
+              expiryStatus.style.margin = '10px 0';
+            }
+
+            if (expiryDate && expiryDate < today) {
+              // Expired product
+              expiryStatus.textContent = 'STATUS: EXPIRED';
+              expiryStatus.style.color = '#dc3545';
+              modalPrice.disabled = true;
+              modalQty.disabled = true;
+              modalButton.disabled = true;
+              document.getElementById('info-expiry').after(expiryStatus);
+            } else if (expiryDate) {
+              // Not expired yet
+              const daysRemaining = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+              expiryStatus.textContent = `STATUS: ${daysRemaining} DAYS REMAINING`;
+              expiryStatus.style.color = daysRemaining <= 7 ? '#ffc107' : '#28a745';
+              document.getElementById('info-expiry').after(expiryStatus);
+            } else {
+              // Remove status if exists
+              if (expiryStatus.parentNode) {
+                expiryStatus.parentNode.removeChild(expiryStatus);
+              }
+            }
+
+            // Set default price
+            if (!modalPrice.value && p.prod_price) {
+              modalPrice.value = (parseFloat(p.prod_price) * 1.1).toFixed(2);
+            }
+          } else {
+            alert(data.message || 'Product not found');
+            closeProductInfo();
+          }
+        })
+        .catch(error => {
+          console.error('Product error:', error);
+          alert('Failed to load product.' + error.message);
+          closeProductInfo();
+        });
+    }
+
+    function closeProductInfo() {
+      document.getElementById('product-info-section').style.display = 'none';
+    }
+
+    function showExpiryCheck() {
+      document.getElementById('dashboard-content').style.display = 'none';
+      document.getElementById('available-products-section').style.display = 'none';
+      document.getElementById('stock-section').style.display = 'none';
+      document.getElementById('product-info-section').style.display = 'none';
+      document.getElementById('expiry-section').style.display = 'block';
+      loadExpiryData();
+    }
+
+    function loadExpiryData() {
+      const daysThreshold = document.getElementById('expiryDaysThreshold').value;
+
+      fetch(`/check_expiring_products?days=${daysThreshold}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            renderExpiryProducts(data.expired_products, 'expired-products-list', 'danger', true);
+            renderExpiryProducts(data.expiring_products, 'expiring-products-list', 'warning', false);
+            renderExpiryProducts(data.safe_products, 'safe-products-list', 'success', false);
+
+            // Update counts
+            document.getElementById('expired-count').textContent = data.expired_products.length;
+            document.getElementById('expiring-count').textContent = data.expiring_products.length;
+            document.getElementById('safe-count').textContent = data.safe_products.length;
+          } else {
+            alert('Failed to load expiry data: ' + (data.message || 'Unknown error'));
+          }
+        })
+        .catch(error => {
+          console.error('Error loading expiry data:', error);
+          alert('Error loading expiry data');
+        });
+    }
+
+    function renderExpiryProducts(products, containerId, alertClass, showDeleteButton) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = "";
+
+      if (!products || products.length === 0) {
+        container.innerHTML = `<div class="col-12 text-muted">No products in this category</div>`;
+        return;
+      }
+
+      products.forEach(p => {
+        const days = p.days_to_expiry || 0;
+        let statusText = "";
+        let statusClass = "";
+
+        if (days < 0) {
+          statusText = 'Expired';
+          statusClass = 'text-danger';
+        } else if (days <= 7) {
+          statusText = `${days} day${days !== 1 ? 's' : ''} to expiry`;
+          statusClass = 'text-warning';
+        } else {
+          statusText = `${days} day${days !== 1 ? 's' : ''} to expiry`;
+          statusClass = 'text-success';
+        }
+
+        const card = document.createElement('div');
+        card.className = 'col-md-3 mb-4';
+
+        // Only show delete button for expired products
+        const deleteButton = showDeleteButton ? `
+            <button class="btn btn-danger mt-2 w-100"
+                onclick="deleteExpiredProduct('${p.prod_barcode}')">
+                Delete
+            </button>
+        ` : "";
+
+        card.innerHTML = `
+            <div class="card h-100 border-${alertClass}">
+                <div class="card-body">
+                    <h5 class="card-title">${p.prod_name || 'Product'}</h5>
+                    <p class="card-text"><b>Barcode:</b> ${p.prod_barcode}</p>
+                    <p class="card-text"><b>Expiry:</b> ${p.prod_expiry_date}</p>
+                    <p class="card-text ${statusClass}"><b>Status:</b> ${statusText}</p>
+                    <p class="card-text"><b>Price:</b> R${parseFloat(p.shop_price || 0).toFixed(2)}</p>
+                    <p class="card-text"><b>Stock:</b> ${p.stock_quantity}</p>
+                    ${deleteButton}
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function deleteExpiredProduct(barcode) {
+      if (!confirm('Are you sure you want to delete this expired product from your inventory?')) {
+        return;
+      }
+
+      fetch('/delete_expired_product', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          prod_barcode: barcode
+        })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert('Product deleted successfully');
+            loadExpiryData();
+          } else {
+            alert('Failed to delete product: ' + (data.message || 'Unknown error'));
+          }
+        })
+        .catch(error => {
+          console.error('Error deleting product', error);
+          alert('Error deleting product');
+        });
+    }
+
+    function logoutSpazaOwner() {
+      fetch('/logout_spaza_owner')
+        .then(response => {
+          if (response.redirected) {
+            window.location.href = response.url;
+          } else {
+            window.location.href = '/';
+          }
+        })
+        .catch(error => {
+          console.error('Logout error:', error);
+          window.location.href = '/';
+        });
+    }
+
+    // Initialize on page load
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function () {
+      initSearch();
+      loadDashboard();
+
+      // Set up navigation links
+      document.querySelectorAll('.nav-link').forEach(link => {
+        link.addEventListener('click', function (e) {
+          e.preventDefault();
+          const onclickAttr = this.getAttribute('onclick');
+          if (onclickAttr) {
+            const functionName = onclickAttr.match(/show\w+/)[0];
+            if (functionName && window[functionName]) {
+              window[functionName]();
+            }
+          }
+        });
+      });
+    });
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

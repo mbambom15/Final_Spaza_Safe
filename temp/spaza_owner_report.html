@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Spaza Owner Business Report</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1,
+        h2 {
+            color: #2c3e50;
+        }
+
+        .report-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-card h3 {
+            margin-top: 0;
+            color: #3498db;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .expired {
+            background-color: #ffebee;
+        }
+
+        .expiring-soon {
+            background-color: #fff3e0;
+        }
+
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            color: white;
+        }
+
+        .expired-badge {
+            background-color: #f44336;
+        }
+
+        .expiring-badge {
+            background-color: #ff9800;
+        }
+
+        .valid-badge {
+            background-color: #4CAF50;
+        }
+
+        #loading,
+        #error {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #error {
+            color: red;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Spaza Owner Business Report</h1>
+
+    <!-- Loading and Error Messages -->
+    <div id="loading">Loading report data...</div>
+    <div id="error"></div>
+
+    <!-- Business Summary Section -->
+    <div id="businessSummary" class="report-section" style="display: none;">
+        <h2>Business Overview</h2>
+        <div class="summary-grid">
+            <div class="summary-card">
+                <h3>Owner Information</h3>
+                <p><strong>Name:</strong> <span id="ownerName">-</span></p>
+                <p><strong>Phone:</strong> <span id="ownerPhone">-</span></p>
+                <p><strong>Account Created:</strong> <span id="accountCreated">-</span></p>
+                <p><strong>Last Login:</strong> <span id="lastLogin">-</span></p>
+            </div>
+
+            <div class="summary-card">
+                <h3>Shop Information</h3>
+                <p><strong>Business Name:</strong> <span id="businessName">-</span></p>
+                <p><strong>Shop Name:</strong> <span id="shopName">-</span></p>
+                <p><strong>Location:</strong> <span id="shopLocation">-</span></p>
+                <p><strong>Registration:</strong> <span id="businessReg">-</span></p>
+            </div>
+
+            <div class="summary-card">
+                <h3>Inventory Analytics</h3>
+                <p><span class="stat-value" id="totalProducts">0</span> <span class="stat-label">Total Products</span>
+                </p>
+                <p><span class="stat-value" id="inventoryValue">R 0.00</span> <span class="stat-label">Inventory
+                        Value</span></p>
+                <p><span class="stat-value" id="lowStock">0</span> <span class="stat-label">Low Stock Items</span></p>
+                <p><span class="stat-value" id="expiringSoon">0</span> <span class="stat-label">Expiring Soon</span></p>
+            </div>
+
+            <div class="summary-card">
+                <h3>Sales Analytics</h3>
+                <p><span class="stat-value" id="totalPurchases">0</span> <span class="stat-label">Total Purchases</span>
+                </p>
+                <p><span class="stat-value" id="totalRevenue">R 0.00</span> <span class="stat-label">Total
+                        Revenue</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Products Section -->
+    <div id="productsSection" class="report-section" style="display: none;">
+        <h2>Product Inventory</h2>
+        <div class="controls">
+            <div>
+                <input type="text" id="productSearch" placeholder="Search products...">
+            </div>
+            <div>
+                <select id="downloadFormat">
+                    <option value="">Download Report</option>
+                    <option value="csv">CSV</option>
+                    <option value="pdf">PDF</option>
+                    <option value="excel">Excel</option>
+                    <option value="json">JSON</option>
+                </select>
+            </div>
+        </div>
+        <table id="productsTable">
+            <thead>
+                <tr>
+                    <th>Barcode</th>
+                    <th>Product Name</th>
+                    <th>Price (R)</th>
+                    <th>Qty</th>
+                    <th>Expiry Date</th>
+                    <th>Days Left</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="reportTableBody">
+                <!-- Products will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Reports Section -->
+    <div id="reportsSection" class="report-section" style="display: none;">
+        <h2>Expired Product Reports</h2>
+        <table id="reportsTable">
+            <thead>
+                <tr>
+                    <th>Report ID</th>
+                    <th>Product Name</th>
+                    <th>Expiry Date</th>
+                    <th>Reporter Email</th>
+                    <th>Report Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="reportsTableBody">
+                <!-- Reports will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf; // Was window.json
+
+        // DOM elements
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        const businessSummaryEl = document.getElementById('businessSummary');
+        const productsSectionEl = document.getElementById('productsSection');
+        const reportsSectionEl = document.getElementById('reportsSection');
+
+        // Report data from server
+        const summaryData = JSON.parse('{{ summary | tojson | safe }}');
+        const productsData = JSON.parse('{{ products | tojson | safe }}');
+        const reportsData = JSON.parse('{{ reports | tojson | safe }}');
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function () {
+            loadingEl.style.display = 'none';
+
+            if (Object.keys(summaryData).length > 0) {
+                // Populate business summary
+                document.getElementById('ownerName').textContent = summaryData.owner_name || '-';
+                document.getElementById('ownerPhone').textContent = summaryData.phone_number || '-';
+                document.getElementById('accountCreated').textContent = summaryData.account_created || '-';
+                document.getElementById('lastLogin').textContent = summaryData.last_login || '-';
+                document.getElementById('businessName').textContent = summaryData.business_name || '-';
+                document.getElementById('businessReg').textContent = summaryData.business_reg_number || '-';
+                document.getElementById('shopName').textContent = summaryData.shop_name || '-';
+                document.getElementById('shopLocation').textContent = summaryData.shop_location || '-';
+
+                document.getElementById('totalProducts').textContent = summaryData.total_products || '0';
+                document.getElementById('inventoryValue').textContent =
+                    'R ' + (summaryData.inventory_value ? parseFloat(summaryData.inventory_value).toFixed(2) : '0.00');
+                document.getElementById('lowStock').textContent = summaryData.low_stock_items || '0';
+                document.getElementById('expiringSoon').textContent = summaryData.expiring_soon || '0';
+                document.getElementById('totalPurchases').textContent = summaryData.total_purchases || '0';
+                document.getElementById('totalRevenue').textContent =
+                    'R ' + (summaryData.total_revenue ? parseFloat(summaryData.total_revenue).toFixed(2) : '0.00');
+
+                businessSummaryEl.style.display = 'block';
+            }
+
+            if (productsData.length > 0) {
+                populateProductsTable(productsData);
+                productsSectionEl.style.display = 'block';
+
+                document.getElementById('downloadFormat').addEventListener('change', handleDownload);
+                document.getElementById('productSearch').addEventListener('input', filterProducts);
+            } else {
+                productsSectionEl.innerHTML += '<p>No products found</p>';
+            }
+
+            if (reportsData.length > 0) {
+                populateReportsTable(reportsData);
+                reportsSectionEl.style.display = 'block';
+            } else {
+                reportsSectionEl.innerHTML += '<p>No expired product reports found</p>';
+            }
+
+            if (Object.keys(summaryData).length === 0 && productsData.length === 0 && reportsData.length === 0) {
+                errorEl.textContent = 'No business data found';
+            }
+        });
+
+
+
+        function populateReportsTable(reports) {
+            const tbody = document.getElementById('reportsTableBody');
+            tbody.innerHTML = '';
+
+            reports.forEach(report => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${report.report_id || '-'}</td>
+                    <td>${report.reported_product || '-'}</td>
+                    <td>${report.reported_expiry || '-'}</td>
+                    <td>${report.reporter_email || '-'}</td>
+                    <td>${report.report_date || '-'}</td>
+                    <td>${report.report_status || '-'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function getStatusClass(status) {
+            if (!status) return '';
+            status = status.toLowerCase();
+            if (status.includes('expired')) return 'expired-badge';
+            if (status.includes('soon')) return 'expiring-badge';
+            if (status.includes('valid')) return 'valid-badge';
+            return '';
+        }
+
+        // Fix typo in variable names
+        businessSummaryEl.style.display = 'block';  // Was businessSummaryEL
+        productsSectionEl.style.display = 'block';  // Was productsSectionEL
+        reportsSectionEl.style.display = 'block';   // Was reportsSectionEL
+
+        // Fix populateProductsTable function
+        function populateProductsTable(products) {
+            const tbody = document.getElementById('reportTableBody'); // Fixed variable name
+            tbody.innerHTML = "";
+
+            products.forEach(product => {
+                const row = document.createElement('tr');
+                // Fixed status class assignment
+                row.className = product.expiry_status ?
+                    product.expiry_status.toLowerCase().replace(/\s+/g, '-') : "";
+
+                // Fixed row HTML syntax
+                row.innerHTML = `
+            <td>${product.prod_barcode || '-'}</td>
+            <td>${product.prod_name || '-'}</td>
+            <td>${product.shop_price ? parseFloat(product.shop_price).toFixed(2) : '0.00'}</td>
+            <td>${product.stock_quantity || '0'}</td>
+            <td>${product.prod_expiry_date || '-'}</td>
+            <td>${product.days_until_expiry || '0'}</td>
+            <td>
+                <span class="status-badge ${getStatusClass(product.expiry_status)}">
+                    ${product.expiry_status || 'UNKNOWN'}
+                </span>
+            </td>
+        `;
+                tbody.appendChild(row); // Was tbodyappendChild
+            });
+        }
+
+        // Fix filterProducts function
+        function filterProducts() {
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#reportTableBody tr');
+
+            rows.forEach(row => {
+                let match = false;
+                const cells = row.querySelectorAll('td');
+
+                for (let cell of cells) {
+                    if (cell.textContent.toLowerCase().includes(searchTerm)) {
+                        match = true;
+                        break;
+                    }
+                }
+
+                row.style.display = match ? '' : 'none';  // Fixed display value
+            });
+        }
+
+        function handleDownload() {
+            const format = document.getElementById('downloadFormat').value;
+            if (!format) return;
+
+            const fileName = `spaza_report_${new Date().toISOString().slice(0, 10)}`;
+
+            switch (format) {
+                case 'csv':
+                    downloadCSV(fileName);
+                    break;
+                case 'pdf':
+                    downloadPDF(fileName);
+                    break;
+                case 'excel':
+                    downloadExcel(fileName);
+                    break;
+                case 'json':
+                    downloadJSON(fileName);
+                    break;
+            }
+
+            document.getElementById('downloadFormat').value = "";
+        }
+        function downloadCSV(fileName) {
+            let csv = "Barcode,Product Name,Price (R),Quantity,Expiry Date,Days Until Expiry,Status\n";
+
+            productsData.forEach(p => {
+                csv += `${p.prod_barcode},"${p.prod_name}",${p.shop_price},${p.stock_quantity},"${p.prod_expiry_date}",${p.days_until_expiry},"${p.expiry_status}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            triggerDownload(blob, `${fileName}.csv`);
+        }
+
+        // Fix PDF download function
+        function downloadPDF(fileName) {
+            const doc = new jsPDF();
+            let yPos = 10;
+
+            // Add title
+            doc.setFontSize(16);
+            doc.setTextColor(40);
+            doc.text('Spaza Owner Business Report', 105, yPos, { align: 'center' });
+            yPos += 15;
+
+            // Add business info
+            doc.setFontSize(12);
+            doc.text(`Business: ${summaryData.business_name || '-'}`, 14, yPos);
+            doc.text(`Registration: ${summaryData.business_reg_number || '-'}`, 14, yPos + 5);
+            doc.text(`Shop: ${summaryData.shop_name || '-'}`, 14, yPos + 10);
+            doc.text(`Location: ${summaryData.shop_location || '-'}`, 14, yPos + 15);
+            doc.text(`Owner: ${summaryData.owner_name || '-'}`, 105, yPos);
+            doc.text(`Phone: ${summaryData.phone_number || '-'}`, 105, yPos + 5);
+            yPos += 25;
+
+            // Add summary stats
+            doc.setFontSize(12);
+            doc.text('Business Summary', 14, yPos);
+            yPos += 7;
+            doc.setFontSize(10);
+
+            // Fixed stats array
+            const stats = [
+                `Total Products: ${summaryData.total_products || '0'}`,
+                `Inventory Value: R ${summaryData.inventory_value ? parseFloat(summaryData.inventory_value).toFixed(2) : '0.00'}`,
+                `Low Stock Items: ${summaryData.low_stock_items || '0'}`,
+                `Expiring Soon: ${summaryData.expiring_soon || '0'}`,
+                `Total Purchases: ${summaryData.total_purchases || '0'}`,
+                `Total Revenue: R ${summaryData.total_revenue ? parseFloat(summaryData.total_revenue).toFixed(2) : '0.00'}`
+            ];
+
+            stats.forEach((stat, i) => {
+                const xPos = i % 2 === 0 ? 14 : 105;
+                const yOffset = Math.floor(i / 2) * 5;
+                doc.text(stat, xPos, yPos + yOffset);
+            });
+
+            yPos += (Math.ceil(stats.length / 2) * 5 + 10);
+
+            // Add products table
+            doc.setFontSize(12);
+            doc.text('Product Inventory', 14, yPos);
+            yPos += 7;
+
+            const headers = ["Barcode", "Product", "Price", "Qty", "Expiry", "Days", "Status"];
+            const rows = productsData.map(p => [
+                p.prod_barcode || '-',
+                p.prod_name || '-',
+                p.shop_price ? parseFloat(p.shop_price).toFixed(2) : '0.00',
+                p.stock_quantity || '0',
+                p.prod_expiry_date || '-',
+                p.days_until_expiry || '0',
+                p.expiry_status || '-'
+            ]);
+
+            doc.autoTable({
+                head: [headers],
+                body: rows,
+                startY: yPos,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [52, 152, 219] }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 10;
+
+            // Add reports table if available
+            if (reportsData.length > 0) {
+                doc.setFontSize(12);
+                doc.text('Expired Product Reports', 14, yPos);
+                yPos += 7;
+
+                const reportHeaders = ["ID", "Product", "Expiry", "Reporter", "Date", "Status"];
+                const reportRows = reportsData.map(r => [
+                    r.report_id || '-',
+                    r.reported_product || '-',
+                    r.reported_expiry || '-',
+                    r.reporter_email || '-',
+                    r.report_date || '-',
+                    r.report_status || '-'
+                ]);
+
+                doc.autoTable({
+                    head: [reportHeaders],
+                    body: reportRows,
+                    startY: yPos,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [52, 152, 219] }
+                });
+            }
+
+            doc.save(`${fileName}.pdf`);
+        }
+
+        function downloadJSON(fileName) {
+            const data = {
+                summary: summaryData,
+                products: productsData,
+                reports: reportsData
+            };
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            triggerDownload(blob, `${fileName}.json`);
+        }
+
+
+        function downloadExcel(fileName) {
+            const wb = XLSX.utils.book_new();
+
+            // Business Summary Sheet
+            const summarySheetData = [
+                ['Business Summary', ''],
+                ['Owner', summaryData.owner_name || '-'],
+                ['Business Name', summaryData.business_name || '-'],
+                ['Registration', summaryData.business_reg_number || '-'],
+                ['Shop Name', summaryData.shop_name || '-'],
+                ['Location', summaryData.shop_location || '-'],
+                [''],
+                ['Analytics', ''],
+                ['Total Products', summaryData.total_products || '0'],
+                ['Inventory Value', summaryData.inventory_value || '0'],
+                ['Low Stock Items', summaryData.low_stock_items || '0'],
+                ['Expiring Soon', summaryData.expiring_soon || '0'],
+                ['Total Purchases', summaryData.total_purchases || '0'],
+                ['Total Revenue', summaryData.total_revenue || '0']
+            ];
+            const summaryWS = XLSX.utils.aoa_to_sheet(summarySheetData);
+            XLSX.utils.book_append_sheet(wb, summaryWS, "Summary");
+
+            // Products Sheet
+            const productsSheetData = [
+                ['Barcode', 'Product Name', 'Price (R)', 'Quantity', 'Expiry Date', 'Days Until Expiry', 'Status']
+            ];
+
+            productsData.forEach(p => {
+                productsSheetData.push([
+                    p.prod_barcode,
+                    p.prod_name,
+                    p.shop_price,
+                    p.stock_quantity,
+                    p.prod_expiry_date,
+                    p.days_until_expiry,
+                    p.expiry_status
+                ]);
+            });
+
+            const productsWS = XLSX.utils.aoa_to_sheet(productsSheetData);
+            XLSX.utils.book_append_sheet(wb, productsWS, "Products");
+
+            // Reports Sheet (if available)
+            if (reportsData.length > 0) {
+                const reportsSheetData = [
+                    ['Report ID', 'Product Name', 'Expiry Date', 'Reporter Email', 'Report Date', 'Status']
+                ];
+
+                reportsData.forEach(r => {
+                    reportsSheetData.push([
+                        r.report_id,
+                        r.reported_product,
+                        r.reported_expiry,
+                        r.reporter_email,
+                        r.report_date,
+                        r.report_status
+                    ]);
+                });
+
+                const reportsWS = XLSX.utils.aoa_to_sheet(reportsSheetData);
+                XLSX.utils.book_append_sheet(wb, reportsWS, "Reports");
+            }
+
+            XLSX.writeFile(wb, `${fileName}.xlsx`);
+        }
+
+        function triggerDownload(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+    </script>
+    <!-- Add this after jspdf script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+</body>
+
+</html>

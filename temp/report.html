@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Product Expiry Report</title>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- jsPDF AutoTable Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Moment.js for date formatting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .download-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .download-btn:hover {
+            background-color: #2980b9;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .expired {
+            background-color: #ffebee;
+        }
+
+        .expiring-soon {
+            background-color: #fff3e0;
+        }
+
+        .valid {
+            background-color: #e8f5e9;
+        }
+
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .expired-badge {
+            background-color: #f44336;
+        }
+
+        .expiring-badge {
+            background-color: #ff9800;
+        }
+
+        .valid-badge {
+            background-color: #4CAF50;
+        }
+
+        #loading {
+            margin: 20px 0;
+            font-style: italic;
+            text-align: center;
+        }
+
+        #error {
+            color: #e74c3c;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #ffebee;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        #manufacturerInfo {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            margin-bottom: 10px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        #productSearch {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            min-width: 250px;
+            font-size: 14px;
+        }
+
+        #productSearch:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Manufacturer Products Report</h1>
+
+    <div class="controls">
+        <div id="reportInfo"></div>
+        <div>
+            <input type="text" id="productSearch" placeholder="Search products..." class="download-btn"
+                style="margin-right: 10px;">
+            <select id="downloadFormat" class="download-btn">
+                <option value="">Download Report</option>
+                <option value="csv">CSV</option>
+                <option value="pdf">PDF</option>
+                <option value="excel">Excel</option>
+                <option value="json">JSON</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="loading">Loading report data...</div>
+    <div id="error"></div>
+
+    <div id="manufacturerInfo" style="display:none;">
+        <h2>Manufacturer Details</h2>
+        <div class="info-grid">
+            <div class="info-item">
+                <span class="info-label">Company:</span>
+                <span id="companyName"></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">License Key:</span>
+                <span id="licenseKey"></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Address:</span>
+                <span id="address"></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Location:</span>
+                <span id="location"></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Last Login:</span>
+                <span id="lastLogin"></span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Created On:</span>
+                <span id="creationDate"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="productsTable" style="display:none;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Barcode</th>
+                    <th>Product Name</th>
+                    <th>Price (R)</th>
+                    <th>Qty</th>
+                    <th>Manufactured</th>
+                    <th>Expiry Date</th>
+                    <th>Days Left</th>
+                    <th>Status</th>
+                    <th>Added</th>
+                </tr>
+            </thead>
+            <tbody id="reportTableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+
+        // Get license key from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const licenseKey = urlParams.get('license_key');
+
+        // DOM elements
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        const manufacturerInfoEl = document.getElementById('manufacturerInfo');
+        const productsTableEl = document.getElementById('productsTable');
+        const reportTableBody = document.getElementById('reportTableBody');
+        const downloadFormat = document.getElementById('downloadFormat');
+
+        // Manufacturer info elements
+        const manufacturerFields = {
+            companyName: document.getElementById('companyName'),
+            licenseKey: document.getElementById('licenseKey'),
+            address: document.getElementById('address'),
+            location: document.getElementById('location'),
+            lastLogin: document.getElementById('lastLogin'),
+            creationDate: document.getElementById('creationDate')
+        };
+
+        // Report data storage
+        let reportData = [];
+        let manufacturerData = {};
+
+        // Format date function
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return moment(dateString).format('YYYY-MM-DD');
+        }
+
+        // Format datetime function
+        function formatDateTime(datetimeString) {
+            if (!datetimeString) return 'N/A';
+            return moment(datetimeString).format('YYYY-MM-DD HH:mm');
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function () {
+            if (!licenseKey) {
+                showError('Error: No license key provided in URL');
+                return;
+            }
+
+            // Set up download button
+            downloadFormat.addEventListener('change', function () {
+                if (this.value) {
+                    downloadReport(this.value);
+                    this.value = ''; // Reset the select
+                }
+            });
+
+            // Load report data
+            loadReportData();
+        });
+
+        // Load report data from API
+        function loadReportData() {
+            fetch(`/manufacturer_report?license_key=${licenseKey}`)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || `HTTP error! status: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    loadingEl.style.display = 'none';
+
+                    if (!data.success) {
+                        showError(data.message || 'Error loading report');
+                        return;
+                    }
+
+                    if (!data.data || data.data.length === 0) {
+                        showNoData();
+                        return;
+                    }
+
+                    reportData = data.data;
+
+                    // Safely get manufacturer data from first product
+                    if (reportData.length > 0 && reportData[0]) {
+                        manufacturerData = {
+                            company_name: reportData[0].company_name || 'N/A',
+                            license_key: reportData[0].license_key || 'N/A',
+                            address: reportData[0].address || 'N/A',
+                            location: reportData[0].location || 'N/A',
+                            last_login: reportData[0].manufacturer_last_login || null,
+                            manufacturer_created: reportData[0].manufacturer_created || null
+                        };
+
+                        displayManufacturerInfo();
+                    }
+
+                    displayProductsTable();
+                    updateReportInfo();
+                })
+                .catch(error => {
+                    loadingEl.style.display = 'none';
+                    showError(error.message);
+                    console.error('Error:', error);
+                });
+        }
+
+        // Display manufacturer information
+        function displayManufacturerInfo() {
+            manufacturerInfoEl.style.display = 'block';
+
+            manufacturerFields.companyName.textContent = manufacturerData.company_name || 'N/A';
+            manufacturerFields.licenseKey.textContent = manufacturerData.license_key || 'N/A';
+            manufacturerFields.address.textContent = manufacturerData.address || 'N/A';
+            manufacturerFields.location.textContent = manufacturerData.location || 'N/A';
+            manufacturerFields.lastLogin.textContent = formatDateTime(manufacturerData.last_login);
+            manufacturerFields.creationDate.textContent = formatDate(manufacturerData.manufacturer_created);
+        }
+
+        // Display products table
+        function displayProductsTable() {
+            productsTableEl.style.display = 'block';
+            reportTableBody.innerHTML = '';
+
+            reportData.forEach(product => {
+                const row = document.createElement('tr');
+                row.className = product.expiry_status.toLowerCase().replace(' ', '-');
+
+                // Create status badge
+                const statusBadge = document.createElement('span');
+                statusBadge.className = 'status-badge ' +
+                    (product.expiry_status === 'EXPIRED' ? 'expired-badge' :
+                        product.expiry_status === 'EXPIRING SOON' ? 'expiring-badge' : 'valid-badge');
+                statusBadge.textContent = product.expiry_status;
+
+                row.innerHTML = `
+                    <td>${product.barcode}</td>
+                    <td>${product.product_name}</td>
+                    <td>${parseFloat(product.price).toFixed(2)}</td>
+                    <td>${product.quantity}</td>
+                    <td>${formatDate(product.manufacture_date)}</td>
+                    <td>${formatDate(product.expiry_date)}</td>
+                    <td>${product.days_until_expiry}</td>
+                    <td></td>
+                    <td>${formatDateTime(product.added_date)}</td>
+                `;
+
+                // Add status badge to the status cell
+                const statusCell = row.cells[7];
+                statusCell.appendChild(statusBadge);
+
+                reportTableBody.appendChild(row);
+            });
+        }
+
+        // Update report information summary
+        function updateReportInfo() {
+            const searchTerm = productSearchEl.value.toLowerCase();
+            const totalProducts = reportData.length;
+
+            let displayProducts = reportData;
+            if (searchTerm) {
+                displayProducts = reportData.filter(product => {
+                    return (
+                        (product.barcode && product.barcode.toLowerCase().includes(searchTerm)) ||
+                        (product.product_name && product.product_name.toLowerCase().includes(searchTerm)) ||
+                        (product.price && product.price.toString().includes(searchTerm)) ||
+                        (product.quantity && product.quantity.toString().includes(searchTerm)) ||
+                        (product.manufacture_date && formatDate(product.manufacture_date).toLowerCase().includes(searchTerm)) ||
+                        (product.expiry_date && formatDate(product.expiry_date).toLowerCase().includes(searchTerm)) ||
+                        (product.days_until_expiry && product.days_until_expiry.toString().includes(searchTerm)) ||
+                        (product.expiry_status && product.expiry_status.toLowerCase().includes(searchTerm)) ||
+                        (product.added_date && formatDateTime(product.added_date).toLowerCase().includes(searchTerm))
+                    );
+                });
+            }
+
+            const expiredCount = displayProducts.filter(p => p.expiry_status === 'EXPIRED').length;
+            const expiringCount = displayProducts.filter(p => p.expiry_status === 'EXPIRING SOON').length;
+
+            document.getElementById('reportInfo').innerHTML = `
+        <div>
+            <strong>Showing:</strong> ${displayProducts.length} of ${totalProducts} products | 
+            <strong>Expired:</strong> <span style="color:#f44336">${expiredCount}</span> | 
+            <strong>Expiring Soon:</strong> <span style="color:#ff9800">${expiringCount}</span>
+        </div>
+    `;
+        }
+
+        // Show error message
+        function showError(message) {
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        // Show no data message
+        function showNoData() {
+            productsTableEl.style.display = 'block';
+            reportTableBody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="no-data">No products found for this manufacturer</td>
+                </tr>
+            `;
+        }
+
+        // Download report in specified format
+        function downloadReport(format) {
+            if (!reportData.length) {
+                alert('No data available for download');
+                return;
+            }
+
+            const manufacturer = reportData[0];
+            const fileName = `manufacturer_report_${manufacturer.company_name}_${new Date().toISOString().slice(0, 10)}`;
+
+            try {
+                if (format === 'csv') {
+                    downloadCSV(fileName);
+                } else if (format === 'pdf') {
+                    downloadPDF(fileName);
+                } else if (format === 'excel') {
+                    downloadExcel(fileName);
+                } else if (format === 'json') {
+                    downloadJSON(fileName);
+                }
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Error generating download: ' + error.message);
+            }
+        }
+
+        // Download as CSV
+        function downloadCSV(fileName) {
+            let csv = "Manufacturer Products Report\n\n";
+            csv += "Manufacturer Details\n";
+            csv += `Company,${manufacturerData.company_name}\n`;
+            csv += `License Key,${manufacturerData.license_key}\n`;
+            csv += `Address,${manufacturerData.address}\n`;
+            csv += `Location,${manufacturerData.location}\n`;
+            csv += `Last Login,${formatDateTime(manufacturerData.last_login)}\n`;
+            csv += `Created On,${formatDate(manufacturerData.manufacturer_created)}\n\n`;
+
+            csv += "Product Details\n";
+            csv += "Barcode,Product Name,Price (R),Quantity,Manufacture Date,Expiry Date,Days Until Expiry,Status,Added Date\n";
+
+            reportData.forEach(p => {
+                csv += `"${p.barcode}","${p.product_name}",${p.price},${p.quantity},"${formatDate(p.manufacture_date)}","${formatDate(p.expiry_date)}",${p.days_until_expiry},"${p.expiry_status}","${formatDateTime(p.added_date)}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            triggerDownload(blob, `${fileName}.csv`);
+        }
+
+        // Download as PDF
+        function downloadPDF(fileName) {
+            const doc = new jsPDF();
+
+            // Report title
+            doc.setFontSize(16);
+            doc.text('Manufacturer Products Report', 105, 15, { align: 'center' });
+
+            // Manufacturer details
+            doc.setFontSize(10);
+            doc.text(`Company: ${manufacturerData.company_name}`, 14, 25);
+            doc.text(`License Key: ${manufacturerData.license_key}`, 14, 30);
+            doc.text(`Address: ${manufacturerData.address}`, 14, 35);
+            doc.text(`Location: ${manufacturerData.location}`, 14, 40);
+            doc.text(`Last Login: ${formatDateTime(manufacturerData.last_login)}`, 14, 45);
+            doc.text(`Created On: ${formatDate(manufacturerData.manufacturer_created)}`, 14, 50);
+
+            // Product table
+            const headers = [
+                "Barcode",
+                "Product Name",
+                "Price",
+                "Qty",
+                "MFG Date",
+                "EXP Date",
+                "Days",
+                "Status",
+                "Added"
+            ];
+
+            const rows = reportData.map(p => [
+                p.barcode,
+                p.product_name,
+                parseFloat(p.price).toFixed(2),
+                p.quantity,
+                formatDate(p.manufacture_date),
+                formatDate(p.expiry_date),
+                p.days_until_expiry,
+                p.expiry_status,
+                formatDateTime(p.added_date)
+            ]);
+
+            doc.autoTable({
+                head: [headers],
+                body: rows,
+                startY: 60,
+                margin: { top: 60 },
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [52, 152, 219] },
+                columnStyles: {
+                    0: { cellWidth: 25 },
+                    1: { cellWidth: 30 },
+                    2: { cellWidth: 15 },
+                    3: { cellWidth: 10 },
+                    4: { cellWidth: 20 },
+                    5: { cellWidth: 20 },
+                    6: { cellWidth: 15 },
+                    7: { cellWidth: 20 },
+                    8: { cellWidth: 25 }
+                },
+                didDrawPage: function (data) {
+                    // Footer
+                    doc.setFontSize(8);
+                    doc.setTextColor(150);
+                    doc.text(
+                        `Page ${data.pageCount}`,
+                        data.settings.margin.left,
+                        doc.internal.pageSize.height - 10
+                    );
+                }
+            });
+
+            doc.save(`${fileName}.pdf`);
+        }
+
+        // Download as Excel
+        function downloadExcel(fileName) {
+            const wb = XLSX.utils.book_new();
+
+            // Manufacturer sheet
+            const manuData = [
+                ["Manufacturer Details"],
+                ["Company", manufacturerData.company_name],
+                ["License Key", manufacturerData.license_key],
+                ["Address", manufacturerData.address],
+                ["Location", manufacturerData.location],
+                ["Last Login", formatDateTime(manufacturerData.last_login)],
+                ["Created On", formatDate(manufacturerData.manufacturer_created)],
+                [],
+                ["Products Report", "", "", "", "", "", "", "", ""],
+                ["Generated On", new Date().toLocaleString(), "", "", "", "", "", "", ""]
+            ];
+
+            const manuWS = XLSX.utils.aoa_to_sheet(manuData);
+            XLSX.utils.book_append_sheet(wb, manuWS, "Manufacturer");
+
+            // Products sheet
+            const productsData = [
+                ["Barcode", "Product Name", "Price (R)", "Quantity", "Manufacture Date", "Expiry Date", "Days Until Expiry", "Status", "Added Date"]
+            ];
+
+            reportData.forEach(p => {
+                productsData.push([
+                    p.barcode,
+                    p.product_name,
+                    parseFloat(p.price),
+                    p.quantity,
+                    formatDate(p.manufacture_date),
+                    formatDate(p.expiry_date),
+                    p.days_until_expiry,
+                    p.expiry_status,
+                    formatDateTime(p.added_date)
+                ]);
+            });
+
+            const productsWS = XLSX.utils.aoa_to_sheet(productsData);
+            XLSX.utils.book_append_sheet(wb, productsWS, "Products");
+
+            XLSX.writeFile(wb, `${fileName}.xlsx`);
+        }
+
+        // Download as JSON
+        function downloadJSON(fileName) {
+            const report = {
+                manufacturer: {
+                    company_name: manufacturerData.company_name,
+                    license_key: manufacturerData.license_key,
+                    address: manufacturerData.address,
+                    location: manufacturerData.location,
+                    last_login: manufacturerData.last_login,
+                    created: manufacturerData.manufacturer_created
+                },
+                products: reportData.map(p => ({
+                    barcode: p.barcode,
+                    product_name: p.product_name,
+                    price: parseFloat(p.price),
+                    quantity: p.quantity,
+                    manufacture_date: formatDate(p.manufacture_date),
+                    expiry_date: formatDate(p.expiry_date),
+                    days_until_expiry: p.days_until_expiry,
+                    status: p.expiry_status,
+                    added_date: formatDateTime(p.added_date)
+                })),
+                summary: {
+                    total_products: reportData.length,
+                    expired_count: reportData.filter(p => p.expiry_status === 'EXPIRED').length,
+                    expiring_soon_count: reportData.filter(p => p.expiry_status === 'EXPIRING SOON').length,
+                    generated_on: new Date().toISOString()
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            triggerDownload(blob, `${fileName}.json`);
+        }
+
+        // Trigger file download
+        function triggerDownload(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+        // add the seacrh functionality.
+        // Add this with your other DOM element declarations
+        const productSearchEl = document.getElementById('productSearch');
+
+        // Add this event listener with your other initialization code
+        productSearchEl.addEventListener('input', filterProducts);
+
+        // Add this function to your JavaScript
+        function filterProducts() {
+            const searchTerm = productSearchEl.value.toLowerCase();
+
+            if (!searchTerm) {
+                // If search is empty, show all products
+                displayProductsTable();
+                return;
+            }
+
+            const filteredProducts = reportData.filter(product => {
+                return (
+                    (product.barcode && product.barcode.toLowerCase().includes(searchTerm)) ||
+                    (product.product_name && product.product_name.toLowerCase().includes(searchTerm)) ||
+                    (product.price && product.price.toString().includes(searchTerm)) ||
+                    (product.quantity && product.quantity.toString().includes(searchTerm)) ||
+                    (product.manufacture_date && formatDate(product.manufacture_date).toLowerCase().includes(searchTerm)) ||
+                    (product.expiry_date && formatDate(product.expiry_date).toLowerCase().includes(searchTerm)) ||
+                    (product.days_until_expiry && product.days_until_expiry.toString().includes(searchTerm)) ||
+                    (product.expiry_status && product.expiry_status.toLowerCase().includes(searchTerm)) ||
+                    (product.added_date && formatDateTime(product.added_date).toLowerCase().includes(searchTerm))
+                );
+            });
+
+            // Create a temporary copy of the original data to display filtered results
+            const tempData = [...reportData];
+            reportData = filteredProducts;
+            displayProductsTable();
+            reportData = tempData; // Restore original data
+
+            // Update the count info
+            updateReportInfo();
+
+            // Show message if no results
+            if (filteredProducts.length === 0) {
+                reportTableBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="no-data">No products match your search</td>
+            </tr>
+        `;
+            }
+        }
+    </script>
+</body>
+
+</html>

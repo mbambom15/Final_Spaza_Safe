@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe.Spaza - Barcode Scanner</title>
+    <style>
+        /* Add to existing styles */
+        #report-success-popup button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #report-success-popup .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        #report-success-popup .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        #report-success-popup .btn-success {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        #report-success-popup .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        .manufacturer-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #3498db;
+        }
+
+        .manufacturer-info h3 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .manufacturer-info p {
+            margin-bottom: 0.5rem;
+        }
+
+        .product-visual {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .product-stock {
+            padding: 0.5rem;
+        }
+
+        .product-stock h4 {
+            color: #2c3e50;
+            margin-bottom: 1rem;
+        }
+
+        .product-stock p {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /*Cart CSS*/
+        .cart-btn {
+            background-color: #f39c12;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .cart-btn:hover {
+            background-color: #e67e22;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            /* Previous mobile styles remain the same */
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            height: 40px;
+        }
+
+        .menu-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .container {
+            flex: 1;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .scanner-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background: #000;
+        }
+
+        #interactive {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        button {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-success {
+            background-color: #2ecc71;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        .product-info {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-top: 1rem;
+        }
+
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .product-table th,
+        .product-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .product-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .status {
+            text-align: center;
+            margin: 1rem 0;
+            font-weight: 500;
+            padding: 0.5rem;
+            border-radius: 5px;
+        }
+
+        .status-scanning {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .loading-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        .manual-entry {
+            margin: 2rem 0;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .manual-entry h2 {
+            margin-bottom: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .input-group button {
+            padding: 0.8rem 1.5rem;
+        }
+
+        .report-btn {
+            background-color: #e74c3c;
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .report-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .expired-warning {
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: #2c3e50;
+            color: white;
+            margin-top: auto;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            #interactive {
+                height: 250px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .input-group button {
+                width: 100%;
+            }
+        }
+
+        /*product image css*/
+        .product-image-box {
+            width: 150px;
+            height: 150px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 5px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-right: 20px;
+        }
+
+        .product-image-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        /*Store selection css*/
+        .store-selection {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .store-select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .store-info {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            border-left: 4px solid #3498db;
+        }
+
+        .cart-indicator {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .cart-preview {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 300px;
+            background: white;
+            color: #333;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 1rem;
+            display: none;
+            max-height: 400px;
+            /* Increased height */
+            overflow-y: auto;
+            /* Add scroll if needed */
+            z-index: 10000;
+            /* Ensure it appears above all content */
+        }
+
+        /* Add this new style */
+        header {
+            position: relative;
+            z-index: 100;
+            /* Lower than cart-preview */
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="cart-indicator" onclick="toggleCartPreview()">
+            <span id="cartItemCount">0</span> | R<span id="cartTotalAmount">0.00</span>
+            <div class="cart-preview" id="cartPreview"></div> <!-- Add this line -->
+        </div>
+    </header>
+
+    <!--This the store drop down-->
+    <div class="store-selection">
+        <h2>Select Store</h2>
+        <select id="storeSelect" class="store-select">
+            <option value="">-- Select a store --</option>
+            <!-- Stores will be populated here -->
+        </select>
+        <div id="storeInfo" class="store-info" style="display: none;">
+            <h3>Store Information</h3>
+            <p><strong>Shop Name:</strong> <span id="shopNameDisplay"></span></p>
+            <p><strong>Location:</strong> <span id="shopLocationDisplay"></span></p> <!-- Added location -->
+            <p><strong>Business Registration:</strong> <span id="businessRegDisplay"></span></p>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Product Scanner</h1>
+        <p>Scan a product barcode to view product information</p>
+
+        <div class="scanner-container">
+            <div id="interactive" class="viewport"></div>
+        </div>
+
+        <div class="controls">
+            <button id="startButton" class="btn-primary" onclick="initScanner()">
+                <span>🔍</span> Start Scanner
+            </button>
+            <button id="stopButton" class="btn-secondary" onclick="stopScanner()" disabled>
+                <span>⏹️</span> Stop Scanner
+            </button>
+        </div>
+
+        <div class="manual-entry">
+            <h2>Manual Barcode Entry</h2>
+            <div class="input-group">
+                <input type="text" id="manualBarcodeInput" placeholder="Enter barcode number">
+                <button class="btn-success" onclick="processManualBarcode()">
+                    <span>↵</span> Submit
+                </button>
+            </div>
+        </div>
+
+        <div id="statusMessage" class="status status-scanning" style="display: none;">
+            Ready to scan
+        </div>
+
+        <div class="loading" id="loadingIndicator">
+            <div class="loading-spinner"></div>
+            <p>Processing barcode...</p>
+        </div>
+
+        <div class="product-info" id="productInfo" style="display: none;">
+            <h2>Product Details</h2>
+            <table class="product-table">
+                <thead>
+                    <tr>
+                        <th>Barcode</th>
+                        <th>Product Name</th>
+                        <th>Price</th>
+                        <th>Expiry Date</th>
+                        <th>Manufacture Date</th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody">
+                    <!-- Product data will be inserted here -->
+                </tbody>
+            </table>
+            <div id="expiryWarning"></div>
+            <div class="action-buttons">
+                <button id="reportButton" class="report-btn" style="display: none;" onclick="reportExpiredProduct()">
+                    <span>⚠️</span> Report to Authorities
+                </button>
+                <button class="cart-btn" onclick="addToCart()">
+                    <span>🛒</span> Add to Cart
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QuaggaJS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+
+    <script>
+        // Global variables
+        let isScanning = false;
+
+        // DOM elements
+        const startButton = document.getElementById('startButton');
+        startButton.disabled = true;
+        const stopButton = document.getElementById('stopButton');
+        const statusMessage = document.getElementById('statusMessage');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const productInfo = document.getElementById('productInfo');
+        const productTableBody = document.getElementById('productTableBody');
+        const manualBarcodeInput = document.getElementById('manualBarcodeInput');
+        const expiryWarning = document.getElementById('expiryWarning');
+        const reportButton = document.getElementById('reportButton');
+
+        // Function to initialize the scanner
+        function initScanner() {
+            if (isScanning) return;
+
+            // Check if browser supports camera access
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                updateStatus("Your browser doesn't support camera access", 'error');
+                return;
+            }
+
+            updateStatus("Initializing scanner...", 'scanning');
+
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: document.querySelector("#interactive"),
+                    constraints: {
+                        facingMode: "environment", // Prefer rear camera
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        aspectRatio: { ideal: 1.333 } // 4:3 aspect ratio
+                    }
+                },
+                decoder: {
+                    readers: [
+                        "ean_reader",      // EAN-13
+                        "ean_8_reader",     // EAN-8
+                        "upc_reader",      // UPC-A
+                        "upc_e_reader"     // UPC-E
+                    ],
+                    multiple: false
+                },
+                locate: true,
+                locator: {
+                    patchSize: "medium",
+                    halfSample: true
+                },
+                numOfWorkers: 4,
+                frequency: 10
+            }, function (err) {
+                if (err) {
+                    console.error("Scanner initialization error:", err);
+                    updateStatus("Error starting scanner: " + err.message, 'error');
+                    return;
+                }
+
+                Quagga.start();
+                isScanning = true;
+
+                // Update UI
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                updateStatus("Scanning for barcodes...", 'scanning');
+
+                // Hide previous results
+                productInfo.style.display = 'none';
+            });
+
+            // Register barcode detection handler
+            Quagga.onDetected(handleBarcodeDetection);
+        }
+
+        // Function to handle detected barcodes
+        async function handleBarcodeDetection(result) {
+            if (!isScanning) return;
+
+            const code = result.codeResult.code;
+            await processBarcode(code);
+        }
+
+        // Function to process manual barcode entry
+        async function processManualBarcode() {
+            const barcode = manualBarcodeInput.value.trim();
+
+            if (!barcode) {
+                updateStatus("Please enter a barcode", 'error');
+                return;
+            }
+
+            if (!/^\d+$/.test(barcode)) {
+                updateStatus("Invalid barcode format (numbers only)", 'error');
+                return;
+            }
+
+            // Stop scanner if it's running
+            if (isScanning) {
+                Quagga.stop();
+                isScanning = false;
+                startButton.disabled = false;
+                stopButton.disabled = true;
+            }
+
+            await processBarcode(barcode);
+        }
+
+        // Add this near the top with your other global variables
+        let selectedShop = null;
+
+        // Call fetchStores when page loads
+        // Fix the window load event handler
+        window.addEventListener('DOMContentLoaded', async function () {
+            try {
+                // Fetch stores
+                const storesResponse = await fetch('/get_stores');
+
+                if (!storesResponse.ok) {
+                    throw new Error('Failed to fetch stores');
+                }
+
+                const stores = await storesResponse.json();
+                const storeSelect = document.getElementById('storeSelect');
+                storeSelect.innerHTML = '<option value="">-- Select a store --</option>';
+
+                // Add location data to options
+                stores.forEach(store => {
+                    const option = document.createElement('option');
+                    option.value = store.business_reg_number;
+                    option.textContent = store.display_name || `${store.shop_name} (${store.business_reg_number})`;
+
+                    // Add location as data attribute
+                    if (store.location) {
+                        option.dataset.location = store.location;
+                    }
+
+                    storeSelect.appendChild(option);
+                });
+
+                storeSelect.addEventListener('change', handleStoreSelection);
+
+                // Check session status
+                const sessionResponse = await fetch('/check_session');
+                const sessionData = await sessionResponse.json();
+
+                if (sessionData.logged_in) {
+                    console.log("Customer is logged in");
+                    // Enable cart functionality
+                    const addToCartBtn = document.querySelector('.cart-btn');
+                    if (addToCartBtn) {
+                        addToCartBtn.disabled = false;
+                        addToCartBtn.title = "";
+                    }
+                } else {
+                    console.log("Customer is not logged in");
+                    updateStatus("Please login to use cart features", 'info');
+
+                    // Disable add to cart button
+                    const addToCartBtn = document.querySelector('.cart-btn');
+                    if (addToCartBtn) {
+                        addToCartBtn.disabled = true;
+                        addToCartBtn.title = "Please login first";
+                    }
+                }
+            } catch (error) {
+                console.error("Initialization error:", error);
+                updateStatus("Error loading page resources", 'error');
+            }
+        });
+
+        // Fix the handleStoreSelection function
+        function handleStoreSelection(event) {
+            const businessRegNumber = event.target.value;
+
+            if (!businessRegNumber) {
+                document.getElementById('storeInfo').style.display = 'none';
+                selectedShop = null;
+                document.getElementById('startButton').disabled = true;
+                return;
+            }
+
+            const selectedOption = event.target.options[event.target.selectedIndex];
+            const displayText = selectedOption.textContent;
+            const shopName = displayText.split(' (')[0];
+
+            // Get location from data attribute
+            const shopLocation = selectedOption.dataset.location || "Not specified";
+
+            document.getElementById('shopNameDisplay').textContent = shopName;
+            document.getElementById('shopLocationDisplay').textContent = shopLocation;
+            document.getElementById('businessRegDisplay').textContent = businessRegNumber;
+            document.getElementById('storeInfo').style.display = 'block';
+
+            selectedShop = {
+                business_reg_number: businessRegNumber,
+                sname: shopName,
+                location: shopLocation
+            };
+
+            document.getElementById('startButton').disabled = false;
+            updateStatus("Store selected. Ready to scan.", 'success');
+            updateCartDisplay();
+        }
+
+
+        // Modified processBarcode function to handle the new response structure
+        async function processBarcode(barcode) {
+            if (!selectedShop) {
+                updateStatus("Please select a store first", 'error');
+                return;
+            }
+
+            loadingIndicator.style.display = 'block';
+            updateStatus("Processing barcode...", 'scanning');
+
+            try {
+                const response = await fetch('/scan_barcode', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        barcode: barcode,
+                        business_reg_number: selectedShop.business_reg_number
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                if (data.product && data.product.prod_barcode) {
+                    displayProductInfo(data);
+                    updateStatus("Product found!", 'success');
+                } else {
+                    updateStatus("Product not found in store inventory", 'error');
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                updateStatus("Error: " + error.message, 'error');
+            } finally {
+                loadingIndicator.style.display = 'none';
+                manualBarcodeInput.value = '';
+            }
+        }
+        // Add this to your global variables
+        let currentProduct = null; // To store the currently displayed product
+
+        // Updated displayProductInfo function to show store-specific info
+        function displayProductInfo(data) {
+            const product = data.product;
+            currentProduct = product;
+
+            const manufacturer = data.manufacturer;
+            const store = data.store; // New store information
+
+            // Create manufacturer info section
+            const manufacturerInfo = `
+        <div class="manufacturer-info">
+            <h3>Manufacturer Details</h3>
+            <p><strong>Company:</strong> ${manufacturer.company_name || 'N/A'}</p>
+            <p><strong>Location:</strong> ${manufacturer.location || 'N/A'}</p>
+            <p><strong>Address:</strong> ${manufacturer.address || 'N/A'}</p>
+            <p><strong>License:</strong> ${manufacturer.license_key || 'N/A'}</p>
+        </div>`;
+
+            // Create store info section if available
+            const storeInfo = store ? `
+        <div class="store-info">
+            <h3>Store Details</h3>
+            <p><strong>Shop Name:</strong> ${store.shop_name || 'N/A'}</p>
+            <p><strong>Business Reg:</strong> ${store.business_reg_number || 'N/A'}</p>
+        </div>` : '';
+
+            // Create product image and quantity section
+            const productImageSection = `
+        <div class="product-visual" style="display: flex; gap: 20px; margin: 20px 0; align-items: center;">
+            <div class="product-image-box">
+                <img src="${product.prod_image_url || 'static/images/default-product.png'}"
+                     alt="${product.prod_name || 'Product image'}">
+            </div>
+            <div class="product-stock" style="flex: 1;">
+                <h4>Stock Information</h4>
+                <p><strong>Available Quantity:</strong> ${product.prod_quantity || 0}</p>
+                ${product.prod_quantity <= 5 ?
+                    `<p style="color: #e74c3c; font-weight: bold;">▲ Low stock!</p>` :
+                    `<p style="color: #2ecc71;">In stock</p>`}
+                ${store ? `<p><strong>Store Price:</strong> R${product.prod_price.toFixed(2)}</p>` : ''}
+            </div>
+        </div>`;
+
+            // Insert everything into the product info container
+            productInfo.innerHTML = `
+        <h2>Product Details</h2>
+        ${storeInfo}
+        ${manufacturerInfo}
+        ${productImageSection}
+        <table class="product-table">
+            <thead>
+                <tr>
+                    <th>Barcode</th>
+                    <th>Product Name</th>
+                    <th>Price</th>
+                    <th>Expiry Date</th>
+                    <th>Manufacture Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>${product.prod_barcode}</td>
+                    <td>${product.prod_name || 'N/A'}</td>
+                    <td>${product.prod_price ? 'R' + product.prod_price.toFixed(2) : 'N/A'}</td>
+                    <td>${product.prod_expiry_date || 'N/A'}</td>
+                    <td>${product.prod_manu_date || 'N/A'}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="action-buttons" id="actionButtons"></div>`;
+
+            // Get the action buttons container
+            const actionButtons = document.getElementById('actionButtons');
+
+            // Create quantity selector
+            const quantitySelector = `
+        <div class="quantity-selector" style="margin-bottom: 1rem;">
+            <label for="quantity">Quantity:</label>
+            <input type="number" id="productQuantity" 
+                   min="1" max="${product.prod_quantity}" 
+                   value="1" style="width: 60px; padding: 0.5rem;">
+        </div>`;
+
+            // Check if product is expired
+            if (product.prod_expiry_date) {
+                const expiryDate = new Date(product.prod_expiry_date);
+                const today = new Date();
+                if (expiryDate < today) {
+                    // Product is expired - show report button
+                    actionButtons.innerHTML = `
+                ${quantitySelector}
+                <button id="reportButton" class="report-btn" onclick="reportExpiredProduct()">
+                    <span>▲</span> Report to Authorities
+                </button>`;
+                } else {
+                    // Product is not expired - show add to cart button
+                    actionButtons.innerHTML = `
+                ${quantitySelector}
+                <button class="cart-btn" onclick="addToCart()">
+                    <span>⬜</span> Add to Cart
+                </button>`;
+                }
+            } else {
+                // No expiry date - show add to cart button
+                actionButtons.innerHTML = `
+            ${quantitySelector}
+            <button class="cart-btn" onclick="addToCart()">
+                <span>⬜</span> Add to Cart
+            </button>`;
+            }
+
+            // Show the product info section
+            productInfo.style.display = 'block';
+        }
+
+        // Function to handle expired product reporting
+        async function reportExpiredProduct() {
+            if (!currentProduct || !selectedShop) {
+                alert("No product selected");
+                return;
+            }
+
+            try {
+                // Get shop location from store info
+                const shopLocation = document.getElementById('shopLocationDisplay')?.textContent || "Unknown";
+
+                const response = await fetch('/report_expired', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        barcode: currentProduct.prod_barcode,
+                        product_name: currentProduct.prod_name,
+                        expiry_date: currentProduct.prod_expiry_date,
+                        business_reg_number: selectedShop.business_reg_number,
+                        shop_name: selectedShop.sname,
+                        shop_location: shopLocation
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    // Replace the alert with the custom popup
+                    showReportSuccessPopup();
+                } else {
+                    alert(`Error: ${data.message}`);
+                }
+            } catch (error) {
+                console.error("Reporting error:", error);
+                alert("Error submitting report");
+            }
+        }
+
+
+
+        let currentCart = null;
+        const cartItemsMap = new Map(); // To track items in current cart
+
+        // Modified addToCart function
+        async function addToCart() {
+            if (!selectedShop) {
+                updateStatus("Please select a store first", 'error');
+                return;
+            }
+
+            if (!currentProduct) {
+                updateStatus("No product selected", 'error');
+                return;
+            }
+
+            const quantityInput = document.getElementById('productQuantity');
+            const quantity = quantityInput ? parseInt(quantityInput.value) : 1;
+
+            if (quantity < 1 || quantity > currentProduct.prod_quantity) {
+                updateStatus(`Please enter a quantity between 1 and ${currentProduct.prod_quantity}`, 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/add_to_cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        barcode: currentProduct.prod_barcode,
+                        business_reg_number: selectedShop.business_reg_number,
+                        quantity: quantity
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    updateStatus(`${quantity} ${currentProduct.prod_name} added to cart!`, 'success');
+                    showCartAddFeedback(currentProduct.prod_name, quantity);
+                    await updateCartDisplay();
+                } else {
+                    updateStatus(data.message || "Failed to add to cart", 'error');
+                }
+            } catch (error) {
+                console.error("Error adding to cart:", error);
+                updateStatus("Error adding to cart", 'error');
+            }
+        }
+        // Add this function for visual feedback
+        function showCartAddFeedback(productName) {
+            const feedback = document.createElement('div');
+            feedback.className = 'cart-feedback';
+            feedback.innerHTML = `
+        <span>✓</span> ${productName} added to cart
+    `;
+
+            document.body.appendChild(feedback);
+
+            // Animate
+            setTimeout(() => {
+                feedback.style.bottom = '20px';
+                feedback.style.opacity = '1';
+            }, 10);
+
+            // Remove after animation
+            setTimeout(() => {
+                feedback.style.bottom = '0';
+                feedback.style.opacity = '0';
+                setTimeout(() => feedback.remove(), 300);
+            }, 3000);
+        }
+
+        // Add this CSS for the feedback animation
+        const style = document.createElement('style');
+        style.textContent = `
+    .cart-feedback {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #2ecc71;
+        color: white;
+        padding: 0.8rem 1.5rem;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        opacity: 0;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    .cart-feedback span {
+        margin-right: 0.5rem;
+    }
+`;
+        document.head.appendChild(style);
+
+        // Function to update cart display
+        // Update the updateCartDisplay function
+        async function updateCartDisplay() {
+            if (!selectedShop) return;
+
+            try {
+                const response = await fetch(`/get_cart?business_reg_number=${selectedShop.business_reg_number}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (!data || !data.success) {
+                    updateMiniCart(null);
+                    updateCartUI(null);
+                    return;
+                }
+
+                // Process cart data
+                const cart = data.cart || null;
+
+                // Update both mini cart and full cart UI
+                updateMiniCart(cart);
+                updateCartUI(cart);
+
+            } catch (error) {
+                console.error("Error fetching cart:", error);
+                updateStatus("Error loading cart", 'error');
+                updateMiniCart(null);
+                updateCartUI(null);
+            }
+        }
+
+
+        // Update the updateMiniCart function
+        function updateMiniCart(cartData) {
+            // Ensure itemCount is a number
+            const itemCount = cartData?.items?.reduce((sum, item) => sum + parseInt(item.quantity), 0) || 0;
+
+            // Ensure total is a number
+            let total = 0;
+            if (cartData && cartData.total) {
+                total = typeof cartData.total === 'number' ? cartData.total : parseFloat(cartData.total);
+            }
+
+            document.getElementById('cartItemCount').textContent = itemCount;
+            document.getElementById('cartTotalAmount').textContent = total.toFixed(2);
+
+            const cartPreview = document.getElementById('cartPreview');
+
+            if (itemCount > 0 && cartData?.items) {
+                cartPreview.innerHTML = `
+            <h4>Your Cart (${itemCount} items)</h4>
+            <ul>
+                ${cartData.items.map(item =>
+                    `<li>${item.prod_name} * ${item.quantity} - R${parseFloat(item.item_total).toFixed(2)}</li>`
+                ).join('')}
+            </ul>
+            <p>Total: R${total.toFixed(2)}</p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-success" onclick="checkoutCart()" style="flex: 1;">
+                    Checkout
+                </button>
+                <button class="btn-primary" onclick="showFullCart()" style="flex: 1;">
+                    View Full Cart
+                </button>
+            </div>
+        `;
+            } else {
+                cartPreview.innerHTML = '<p>Your cart is empty</p>';
+            }
+        }
+
+        function showFullCart() {
+            const cartContainer = document.getElementById('cartContainer');
+            if (cartContainer) {
+                cartContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+
+
+
+        function toggleCartPreview() {
+            const cartPreview = document.getElementById('cartPreview');
+            cartPreview.style.display = cartPreview.style.display === 'block' ? 'none' : 'block';
+        }
+
+        // Function to update cart UI
+        function updateCartUI(cartData) {
+            let cartContainer = document.getElementById('cartContainer');
+
+            // Create container if it doesn't exist
+            if (!cartContainer) {
+                const container = document.querySelector('.container');
+                cartContainer = document.createElement('div');
+                cartContainer.id = 'cartContainer';
+                cartContainer.style.background = 'white';
+                cartContainer.style.padding = '1.5rem';
+                cartContainer.style.borderRadius = '8px';
+                cartContainer.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.05)';
+                cartContainer.style.marginTop = '1.5rem';
+                container.appendChild(cartContainer);
+            }
+
+            // Always show the cart container
+            cartContainer.style.display = 'block';
+
+            if (cartData) {
+                cartContainer.innerHTML = `
+            <h2>Shopping Cart</h2>
+            <div id="cartItemsList"></div>
+            <div id="cartTotal" style="font-weight: bold; text-align: right; margin-top: 1rem;"></div>
+            <div class="action-buttons" id="cartActions" style="margin-top: 1.5rem;"></div>
+        `;
+
+                const cartItemsList = document.getElementById('cartItemsList');
+                const cartTotal = document.getElementById('cartTotal');
+                const cartActions = document.getElementById('cartActions');
+
+                // Update cart items list
+                cartItemsList.innerHTML = `
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid #eee;">Product</th>
+                        <th style="text-align: right; padding: 0.5rem; border-bottom: 1px solid #eee;">Price</th>
+                        <th style="text-align: center; padding: 0.5rem; border-bottom: 1px solid #eee;">Qty</th>
+                        <th style="text-align: right; padding: 0.5rem; border-bottom: 1px solid #eee;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${cartData.items.map(item => `
+                        <tr>
+                            <td style="padding: 0.5rem; border-bottom: 1px solid #eee;">${item.prod_name}</td>
+                            <td style="text-align: right; padding: 0.5rem; border-bottom: 1px solid #eee;">R${item.price_per_unit.toFixed(2)}</td>
+                            <td style="text-align: center; padding: 0.5rem; border-bottom: 1px solid #eee;">${item.quantity}</td>
+                            <td style="text-align: right; padding: 0.5rem; border-bottom: 1px solid #eee;">R${parseFloat(item.item_total).toFixed(2)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+                // Update total
+                cartTotal.textContent = `Total: R${parseFloat(cartData.total).toFixed(2)}`;
+
+                // Update actions
+                cartActions.innerHTML = `
+            <button class="btn-success" onclick="checkoutCart()">
+                Proceed to Checkout
+            </button>
+        `;
+            } else {
+                // Empty cart state
+                cartContainer.innerHTML = `
+            <h2>Shopping Cart</h2>
+            <p>Your cart is empty</p>
+        `;
+            }
+        }
+
+        // Function to handle checkout
+        async function checkoutCart() {
+            try {
+                // Get the current cart
+                const response = await fetch(`/get_cart?business_reg_number=${selectedShop.business_reg_number}`);
+                const cartData = await response.json();
+
+                if (!cartData.success || !cartData.cart) {
+                    updateStatus("No active cart to checkout", 'error');
+                    return;
+                }
+
+                const cartId = cartData.cart.cart_id;
+
+                // Process checkout
+                const checkoutResponse = await fetch('/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cart_id: cartId })
+                });
+
+                const data = await checkoutResponse.json();
+
+                if (data.success) {
+                    showCheckoutPopup("Your order has been processed successfully", data.order_id);
+                    await updateCartDisplay();
+                } else {
+                    updateStatus(data.message || "Checkout failed", 'error');
+                }
+            } catch (error) {
+                console.error("Error during checkout:", error);
+                updateStatus("Error during checkout", 'error');
+            }
+        }
+
+        // Function to stop the scanner
+        function stopScanner() {
+            if (isScanning) {
+                Quagga.stop();
+                isScanning = false;
+
+                startButton.disabled = false;
+                stopButton.disabled = true;
+
+                updateStatus("Scanner stopped", 'scanning');
+            }
+        }
+
+        // Function to update status message
+        function updateStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+
+            // Remove all classes and add the appropriate one
+            statusMessage.className = 'status';
+            statusMessage.classList.add(`status-${type}`);
+        }
+
+        // Function to go back to login
+        function goBackToLogin() {
+            if (isScanning) {
+                Quagga.stop();
+            }
+            window.location.href = '/spazalogin';
+        }
+
+        // Allow pressing Enter in the manual input field
+        manualBarcodeInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                processManualBarcode();
+            }
+        });
+
+        // Clean up when page unloads
+        window.addEventListener('beforeunload', function () {
+            if (isScanning) {
+                Quagga.stop();
+            }
+        });
+
+        //popup
+        // Add this function for checkout popup
+        function showCheckoutPopup(message, orderId) {
+            const popup = document.createElement('div');
+            popup.id = 'checkout-popup';
+            popup.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+
+            const popupContent = document.createElement('div');
+            popupContent.style.cssText = `
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        text-align: center;
+        max-width: 80%;
+    `;
+
+            popupContent.innerHTML = `
+        <h2>Checkout Successful!</h2>
+        <p>${message}</p>
+        <p>Order ID: ${orderId}</p>
+        <button class="btn-success" style="margin-top: 1rem;">
+            Continue to Dashboard
+        </button>
+    `;
+
+            popupContent.querySelector('button').addEventListener('click', () => {
+                window.location.href = '/dashboard';
+            });
+
+            popup.appendChild(popupContent);
+            document.body.appendChild(popup);
+        }
+        // Add this function
+        function showReportSuccessPopup() {
+            const popup = document.createElement('div');
+            popup.id = 'report-success-popup';
+            popup.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+    `;
+
+            const popupContent = document.createElement('div');
+            popupContent.style.cssText = `
+        background: white;
+        padding: 2rem;
+        border-radius: 10px;
+        text-align: center;
+        max-width: 80%;
+    `;
+
+            popupContent.innerHTML = `
+        <h2>Report Submitted Successfully!</h2>
+        <p>The authorities have been notified about the expired product.</p>
+        <div style="display: flex; gap: 10px; margin-top: 1rem;">
+            <button class="btn-primary" onclick="document.getElementById('report-success-popup').remove()">
+                Continue Scanning
+            </button>
+            <button class="btn-success" onclick="window.location.href='/dashboard'">
+                Go to Dashboard
+            </button>
+        </div>
+    `;
+
+            popup.appendChild(popupContent);
+            document.body.appendChild(popup);
+        }
+
+
+    </script>
+</body>
+
+</html>

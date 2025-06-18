@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - Shop Owner</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    form {
+      width: 100%;
+      max-width: 450px;
+      text-align: center;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .form-group {
+      margin: 15px 0;
+      text-align: left;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 12px 20px;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 0;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    a {
+      text-decoration: none;
+      color: #28a745;
+      display: block;
+      margin-top: 10px;
+    }
+
+    #message {
+      margin: 15px 0;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+      width: 80%;
+      margin: 0 auto 15px;
+    }
+
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <h1>Shop Owner Sign Up</h1>
+  <div id="message"></div>
+  <form id="signupForm">
+    <div class="form-group">
+      <input type="text" name="oname" placeholder="Owner Name" required>
+    </div>
+    <div class="form-group">
+      <input type="password" name="opassword" placeholder="Password" required maxlength="15">
+    </div>
+    <div class="form-group">
+      <input type="tel" name="phone_number" placeholder="Phone Number" required>
+    </div>
+    <div class="form-group">
+      <input type="text" name="business_name" placeholder="Business Name" required>
+    </div>
+    <div class="form-group">
+      <input type="text" name="business_reg_number" placeholder="Business Registration Number" required>
+    </div>
+     <div class="form-group">
+      <input type="text" name="location" placeholder="Location" required>
+    </div>
+    <button type="submit">Sign Up</button>
+  </form>
+  <a href="/login_spazaOwner">Back to Login</a>
+
+  <script>
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      const messageDiv = document.getElementById('message');
+      
+      try {
+        const response = await fetch('/signup_spazaOwner', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          messageDiv.textContent = data.message;
+          messageDiv.className = 'success';
+          messageDiv.style.display = 'block';
+          
+          // Redirect after 2 seconds
+          setTimeout(() => {
+            window.location.href = data.redirect;
+          }, 2000);
+        } else {
+          messageDiv.textContent = data.message;
+          messageDiv.className = 'error';
+          messageDiv.style.display = 'block';
+        }
+      } catch (error) {
+        messageDiv.textContent = 'An error occurred. Please try again.';
+        messageDiv.className = 'error';
+        messageDiv.style.display = 'block';
+        console.error('Error:', error);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Government Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Similar styles to your login page */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a237e, #283593);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 350px;
+            text-align: center;
+        }
+
+        .logo {
+            margin-bottom: 20px;
+        }
+
+        .logo i {
+            font-size: 48px;
+            color: #1a237e;
+        }
+
+        h2 {
+            color: #1a237e;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #1a237e;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #283593;
+        }
+
+        .error {
+            color: #d32f2f;
+            margin-top: 10px;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const loginForm = document.getElementById('govLoginForm');
+            const errorDiv = document.getElementById('error-message');
+
+            loginForm.addEventListener('submit', async function (e) {
+                e.preventDefault();
+
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                // Clear previous errors
+                errorDiv.textContent = '';
+
+                // Basic validation
+                if (!email || !password) {
+                    errorDiv.textContent = 'Both email and password are required';
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/login_government', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
+                            'email': email,
+                            'password': password
+                        })
+                    });
+
+                    // Handle redirects
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                        return;
+                    }
+
+                    // Handle JSON responses
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Redirect to dashboard
+                        window.location.href = result.redirect || '/government_dashboard';
+                    } else {
+                        errorDiv.textContent = result.message || 'Login failed';
+                    }
+                } catch (error) {
+                    errorDiv.textContent = 'An error occurred. Please try again.';
+                    console.error('Login error:', error);
+                }
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="fas fa-landmark"></i>
+        </div>
+        <h2>Government Authority Login</h2>
+
+        <div id="error-message" class="error"></div>
+
+        <form id="govLoginForm">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+
+</html>

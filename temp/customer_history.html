@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer History Report</title>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- jsPDF AutoTable Plugin -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Moment.js for date formatting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .download-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        #historySearch {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            min-width: 300px;
+            font-size: 14px;
+        }
+
+        #historySearch:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #2c3e50;
+            color: white;
+            position: sticky;
+            top: 0;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .purchase-row {
+            background-color: #e8f5e9;
+        }
+
+        .report-row {
+            background-color: #e3f2fd;
+        }
+
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            display: inline-block;
+        }
+
+        .pending-badge {
+            background-color: #ff9800;
+        }
+
+        .investigating-badge {
+            background-color: #2196f3;
+        }
+
+        .resolved-badge {
+            background-color: #4CAF50;
+        }
+
+        #loading {
+            margin: 20px 0;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        #error {
+            color: #e74c3c;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #ffebee;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+
+        .customer-info {
+            background: white;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            margin-bottom: 15px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            font-style: italic;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            min-width: 180px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+        }
+
+        .purchases-stat {
+            background-color: #e8f5e9;
+        }
+
+        .reports-stat {
+            background-color: #e3f2fd;
+        }
+
+        .total-stat {
+            background-color: #f5f5f5;
+        }
+
+        .report-info {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+            transition: background-color 0.3s;
+        }
+
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+
+        .tab:hover:not(.active) {
+            background-color: #f8f9fa;
+        }
+
+        .content-section {
+            display: none;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .content-section.active {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Customer History Report</h1>
+        <p class="subtitle">View your complete purchase and report history</p>
+    </div>
+
+    <div class="customer-info">
+        <h2>Account Information</h2>
+        <div class="info-grid" id="customerInfoGrid">
+            <!-- Customer info will be populated here -->
+        </div>
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-box purchases-stat">
+            <div class="stat-label">Total Purchases</div>
+            <div class="stat-value" id="totalPurchases">0</div>
+        </div>
+        <div class="stat-box reports-stat">
+            <div class="stat-label">Reports Submitted</div>
+            <div class="stat-value" id="totalReports">0</div>
+        </div>
+        <div class="stat-box total-stat">
+            <div class="stat-label">Total Spending</div>
+            <div class="stat-value" id="totalSpending">R0.00</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="report-info" id="reportInfo">
+            Showing <strong id="shownCount">0</strong> of <strong id="totalCount">0</strong> records
+        </div>
+
+        <div class="filter-container">
+            <input type="text" id="historySearch" placeholder="Search by product, store, price, date...">
+            <select id="downloadFormat" class="download-btn">
+                <option value="">Download Report</option>
+                <option value="csv">CSV</option>
+                <option value="pdf">PDF</option>
+                <option value="excel">Excel</option>
+                <option value="json">JSON</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="all">All History</div>
+        <div class="tab" data-tab="purchases">Purchases</div>
+        <div class="tab" data-tab="reports">Reports</div>
+    </div>
+
+    <div id="loading">Loading your history data...</div>
+    <div id="error"></div>
+
+    <div class="content-section active" id="allHistorySection">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Details</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Store</th>
+                </tr>
+            </thead>
+            <tbody id="reportTableBody">
+                <!-- History data will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="content-section" id="purchasesSection">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Order ID</th>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                    <th>Store</th>
+                </tr>
+            </thead>
+            <tbody id="purchasesTableBody">
+                <!-- Purchases data will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="content-section" id="reportsSection">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Report ID</th>
+                    <th>Product</th>
+                    <th>Expiry Date</th>
+                    <th>Status</th>
+                    <th>Store</th>
+                </tr>
+            </thead>
+            <tbody id="reportsTableBody">
+                <!-- Reports data will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+
+        // DOM elements
+        const loadingEl = document.getElementById('loading');
+        const errorEl = document.getElementById('error');
+        const reportTableBody = document.getElementById('reportTableBody');
+        const purchasesTableBody = document.getElementById('purchasesTableBody');
+        const reportsTableBody = document.getElementById('reportsTableBody');
+        const downloadFormat = document.getElementById('downloadFormat');
+        const historySearch = document.getElementById('historySearch');
+        const customerInfoGrid = document.getElementById('customerInfoGrid');
+        const totalPurchasesEl = document.getElementById('totalPurchases');
+        const totalReportsEl = document.getElementById('totalReports');
+        const totalSpendingEl = document.getElementById('totalSpending');
+        const shownCountEl = document.getElementById('shownCount');
+        const totalCountEl = document.getElementById('totalCount');
+
+        // History data storage
+        let historyData = [];
+        let customerData = {};
+        let activeTab = 'all';
+
+        // Format date function
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return moment(dateString).format('YYYY-MM-DD');
+        }
+
+        // Format datetime function
+        function formatDateTime(datetimeString) {
+            if (!datetimeString) return 'N/A';
+            return moment(datetimeString).format('YYYY-MM-DD HH:mm');
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return 'R' + parseFloat(amount).toFixed(2);
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function () {
+            // Set up download button
+            downloadFormat.addEventListener('change', function () {
+                if (this.value) {
+                    downloadReport(this.value);
+                    this.value = ""; // Reset the select
+                }
+            });
+
+            // Set up search
+            historySearch.addEventListener('input', filterHistory);
+
+            // Set up tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function () {
+                    // Only process if not already active
+                    if (this.classList.contains('active')) return;
+
+                    // Get new tab type
+                    const newTab = this.getAttribute('data-tab');
+                    activeTab = newTab; 
+                    // Show loading indicator during transition
+                    const allSections = document.querySelectorAll('.content-section');
+                    allSections.forEach(section => {
+                        section.style.opacity = '0.5';
+                        section.style.pointerEvents = 'none';
+                    });
+
+                    // Add active class to clicked tab after short delay
+                    setTimeout(() => {
+                        // Remove active class from all tabs
+                        document.querySelectorAll('.tab').forEach(t => {
+                            t.classList.remove('active');
+                        });
+
+                        // Add active class to clicked tab
+                        this.classList.add('active');
+
+                        // Hide all content sections
+                        allSections.forEach(section => {
+                            section.classList.remove('active');
+                            section.style.opacity = '';
+                            section.style.pointerEvents = '';
+                        });
+
+                        // Show the corresponding content section
+                        document.getElementById(`${newTab}Section`).classList.add('active');
+
+                        // Filter data based on tab
+                        filterHistory();
+                    }, 150); // Short transition delay
+                });
+            });
+            // Load report data
+            loadHistoryData();
+        });
+
+        // Load history data from API
+        function loadHistoryData() {
+            fetch('/customer_history')
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || `HTTP error! status: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    loadingEl.style.display = 'none';
+
+                    if (!data.success) {
+                        showError(data.message || 'Error loading history data');
+                        return;
+                    }
+
+                    if (!data.data || data.data.length === 0) {
+                        showNoData();
+                        return;
+                    }
+
+                    historyData = data.data;
+                    customerData = {
+                        email: historyData[0].email || 'N/A',
+                        telephone: historyData[0].telephone || 'N/A',
+                        account_created: historyData[0].account_created || 'N/A',
+                        last_login: historyData[0].last_login || 'N/A'
+                    };
+
+                    displayCustomerInfo();
+                    displayHistoryTable();
+                    updateStats();
+                })
+                .catch(error => {
+                    loadingEl.style.display = 'none';
+                    showError(error.message);
+                    console.error('Error:', error);
+                });
+        }
+
+        // Display customer information
+        function displayCustomerInfo() {
+            customerInfoGrid.innerHTML = `
+                <div class="info-item">
+                    <span class="info-label">Email:</span>
+                    <span class="info-value">${customerData.email}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Phone:</span>
+                    <span class="info-value">${customerData.telephone}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Account Created:</span>
+                    <span class="info-value">${formatDateTime(customerData.account_created)}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Last Login:</span>
+                    <span class="info-value">${formatDateTime(customerData.last_login)}</span>
+                </div>
+            `;
+        }
+
+        // Display history table
+        function displayHistoryTable() {
+            reportTableBody.innerHTML = "";
+            purchasesTableBody.innerHTML = "";
+            reportsTableBody.innerHTML = "";
+
+            let purchaseCount = 0;
+            let reportCount = 0;
+            let totalSpending = 0;
+
+            historyData.forEach(record => {
+                if (record.cart_id) {
+                    // This is a purchase record
+                    const row = document.createElement('tr');
+                    row.className = 'purchase-row';
+                    row.innerHTML = `
+                        <td>${formatDateTime(record.purchase_date)}</td>
+                        <td>Purchase</td>
+                        <td>Order #${record.cart_id}</td>
+                        <td>${record.prod_name || 'N/A'}</td>
+                        <td>${record.quantity || 0}</td>
+                        <td>${formatCurrency(record.total_price || 0)}</td>
+                        <td>Completed</td>
+                        <td>${record.store_name || 'N/A'}</td>
+                    `;
+                    reportTableBody.appendChild(row);
+
+                    // Add to purchases table
+                    const purchaseRow = row.cloneNode(true);
+                    purchaseRow.innerHTML = `
+                        <td>${formatDateTime(record.purchase_date)}</td>
+                        <td>${record.cart_id}</td>
+                        <td>${record.prod_name || 'N/A'}</td>
+                        <td>${record.quantity || 0}</td>
+                        <td>${formatCurrency(record.price_per_unit || 0)}</td>
+                        <td>${formatCurrency(record.total_price || 0)}</td>
+                        <td>${record.store_name || 'N/A'}</td>
+                    `;
+                    purchasesTableBody.appendChild(purchaseRow);
+
+                    purchaseCount++;
+                    totalSpending += parseFloat(record.total_price) || 0;
+                }
+
+                if (record.report_id) {
+                    // This is a report record
+                    const row = document.createElement('tr');
+                    row.className = 'report-row';
+
+                    // Determine status badge
+                    let statusBadge = '';
+                    if (record.report_status === 'PENDING') {
+                        statusBadge = '<span class="status-badge pending-badge">Pending</span>';
+                    } else if (record.report_status === 'INVESTIGATING') {
+                        statusBadge = '<span class="status-badge investigating-badge">Investigating</span>';
+                    } else if (record.report_status === 'RESOLVED') {
+                        statusBadge = '<span class="status-badge resolved-badge">Resolved</span>';
+                    }
+
+                    row.innerHTML = `
+                        <td>${formatDateTime(record.report_date)}</td>
+                        <td>Report</td>
+                        <td>Report #${record.report_id}</td>
+                        <td>${record.reported_product || 'N/A'}</td>
+                        <td>${record.quantity || 0}</td>
+                        <td>N/A</td>
+                        <td>${statusBadge}</td>
+                        <td>${record.reported_shop || 'N/A'}</td>
+                    `;
+                    reportTableBody.appendChild(row);
+
+                    // Add to reports table
+                    const reportRow = row.cloneNode(true);
+                    reportRow.innerHTML = `
+                        <td>${formatDateTime(record.report_date)}</td>
+                        <td>${record.report_id}</td>
+                        <td>${record.reported_product || 'N/A'}</td>
+                        <td>${formatDate(record.reported_expiry)}</td>
+                        <td>${statusBadge}</td>
+                        <td>${record.reported_shop || 'N/A'}</td>
+                    `;
+                    reportsTableBody.appendChild(reportRow);
+
+                    reportCount++;
+                }
+            });
+
+            totalCountEl.textContent = historyData.length;
+            shownCountEl.textContent = historyData.length;
+        }
+
+        // Update statistics
+        function updateStats() {
+            const purchases = historyData.filter(record => record.cart_id).length;
+            const reports = historyData.filter(record => record.report_id).length;
+            const spending = historyData.reduce((sum, record) => {
+                return sum + (parseFloat(record.total_price) || 0);
+            }, 0);
+
+            totalPurchasesEl.textContent = purchases;
+            totalReportsEl.textContent = reports;
+            totalSpendingEl.textContent = formatCurrency(spending);
+        }
+
+        // Filter history
+        function filterHistory() {
+            const searchTerm = historySearch.value.toLowerCase();
+
+            let filteredData = historyData;
+
+            // Apply tab filter
+            if (activeTab === 'purchases') {
+                filteredData = filteredData.filter(record => record.cart_id);
+            } else if (activeTab === 'reports') {
+                filteredData = filteredData.filter(record => record.report_id);
+            }
+
+            // Apply search filter
+            if (searchTerm) {
+                filteredData = filteredData.filter(record => {
+                    return (
+                        // Existing search conditions
+                        (record.email && record.email.toLowerCase().includes(searchTerm)) ||
+                        (record.telephone && record.telephone.toLowerCase().includes(searchTerm)) ||
+                        (record.prod_name && record.prod_name.toLowerCase().includes(searchTerm)) ||
+                        (record.store_name && record.store_name.toLowerCase().includes(searchTerm)) ||
+                        (record.reported_product && record.reported_product.toLowerCase().includes(searchTerm)) ||
+                        (record.reported_shop && record.reported_shop.toLowerCase().includes(searchTerm)) ||
+                        (record.report_status && record.report_status.toLowerCase().includes(searchTerm)) ||
+                        (record.cart_id && record.cart_id.toString().includes(searchTerm)) ||
+                        (record.report_id && record.report_id.toString().includes(searchTerm)) ||
+                        (record.purchase_date && formatDateTime(record.purchase_date).toLowerCase().includes(searchTerm)) ||
+                        (record.report_date && formatDateTime(record.report_date).toLowerCase().includes(searchTerm)) ||
+
+                        // NEW: Add price/total filtering
+                        (record.total_price && record.total_price.toString().includes(searchTerm)) ||
+                        (record.price_per_unit && record.price_per_unit.toString().includes(searchTerm))
+                    );
+                });
+            }
+
+            shownCountEl.textContent = filteredData.length;
+
+            // Render the filtered data based on active tab
+            if (activeTab === 'all') {
+                renderFilteredHistory(filteredData, reportTableBody);
+            } else if (activeTab === 'purchases') {
+                renderFilteredPurchases(filteredData, purchasesTableBody);
+            } else if (activeTab === 'reports') {
+                renderFilteredReports(filteredData, reportsTableBody);
+            }
+        }
+
+        // Render filtered history
+        function renderFilteredHistory(data, tableBody) {
+            tableBody.innerHTML = "";
+
+            data.forEach(record => {
+                const row = document.createElement('tr');
+
+                if (record.cart_id) {
+                    row.className = 'purchase-row';
+                    row.innerHTML = `
+                        <td>${formatDateTime(record.purchase_date)}</td>
+                        <td>Purchase</td>
+                        <td>Order #${record.cart_id}</td>
+                        <td>${record.prod_name || 'N/A'}</td>
+                        <td>${record.quantity || 0}</td>
+                        <td>${formatCurrency(record.total_price || 0)}</td>
+                        <td>Completed</td>
+                        <td>${record.store_name || 'N/A'}</td>
+                    `;
+                } else if (record.report_id) {
+                    row.className = 'report-row';
+
+                    let statusBadge = '';
+                    if (record.report_status === 'PENDING') {
+                        statusBadge = '<span class="status-badge pending-badge">Pending</span>';
+                    } else if (record.report_status === 'INVESTIGATING') {
+                        statusBadge = '<span class="status-badge investigating-badge">Investigating</span>';
+                    } else if (record.report_status === 'RESOLVED') {
+                        statusBadge = '<span class="status-badge resolved-badge">Resolved</span>';
+                    }
+
+                    row.innerHTML = `
+                        <td>${formatDateTime(record.report_date)}</td>
+                        <td>Report</td>
+                        <td>Report #${record.report_id}</td>
+                        <td>${record.reported_product || 'N/A'}</td>
+                        <td>${record.quantity || 0}</td>
+                        <td>N/A</td>
+                        <td>${statusBadge}</td>
+                        <td>${record.reported_shop || 'N/A'}</td>
+                    `;
+                }
+
+                tableBody.appendChild(row);
+            });
+
+            if (data.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="no-data">No records match your search</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Render filtered purchases
+        function renderFilteredPurchases(data, tableBody) {
+            tableBody.innerHTML = "";
+
+            const purchases = data.filter(record => record.cart_id);
+
+            purchases.forEach(record => {
+                const row = document.createElement('tr');
+                row.className = 'purchase-row';
+                row.innerHTML = `
+                    <td>${formatDateTime(record.purchase_date)}</td>
+                    <td>${record.cart_id}</td>
+                    <td>${record.prod_name || 'N/A'}</td>
+                    <td>${record.quantity || 0}</td>
+                    <td>${formatCurrency(record.price_per_unit || 0)}</td>
+                    <td>${formatCurrency(record.total_price || 0)}</td>
+                    <td>${record.store_name || 'N/A'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            if (purchases.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="no-data">No purchases match your search</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Render filtered reports
+        function renderFilteredReports(data, tableBody) {
+            tableBody.innerHTML = "";
+
+            const reports = data.filter(record => record.report_id);
+
+            reports.forEach(record => {
+                const row = document.createElement('tr');
+                row.className = 'report-row';
+
+                let statusBadge = '';
+                if (record.report_status === 'PENDING') {
+                    statusBadge = '<span class="status-badge pending-badge">Pending</span>';
+                } else if (record.report_status === 'INVESTIGATING') {
+                    statusBadge = '<span class="status-badge investigating-badge">Investigating</span>';
+                } else if (record.report_status === 'RESOLVED') {
+                    statusBadge = '<span class="status-badge resolved-badge">Resolved</span>';
+                }
+
+                row.innerHTML = `
+                    <td>${formatDateTime(record.report_date)}</td>
+                    <td>${record.report_id}</td>
+                    <td>${record.reported_product || 'N/A'}</td>
+                    <td>${formatDate(record.reported_expiry)}</td>
+                    <td>${statusBadge}</td>
+                    <td>${record.reported_shop || 'N/A'}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+
+            if (reports.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="no-data">No reports match your search</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        // Show no data message
+        function showNoData() {
+            reportTableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="no-data">No history data found for your account</td>
+                </tr>
+            `;
+        }
+
+        // Download report in specified format
+        function downloadReport(format) {
+            if (!historyData.length) {
+                alert('No data available for download');
+                return;
+            }
+
+            const fileName = `customer_history_${customerData.email}_${new Date().toISOString().slice(0, 10)}`;
+
+            try {
+                if (format === 'csv') {
+                    downloadCSV(fileName);
+                } else if (format === 'pdf') {
+                    downloadPDF(fileName);
+                } else if (format === 'excel') {
+                    downloadExcel(fileName);
+                } else if (format === 'json') {
+                    downloadJSON(fileName);
+                }
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Error generating download: ' + error.message);
+            }
+        }
+
+        // Download as CSV
+        function downloadCSV(fileName) {
+            let csv = "Customer History Report\n\n";
+            csv += "Customer Details\n";
+            csv += `Email,${customerData.email}\n`;
+            csv += `Phone,${customerData.telephone}\n`;
+            csv += `Account Created,${formatDateTime(customerData.account_created)}\n`;
+            csv += `Last Login,${formatDateTime(customerData.last_login)}\n\n`;
+
+            csv += "History Details\n";
+            csv += "Date,Type,Details,Product,Quantity,Amount,Status,Store\n";
+
+            historyData.forEach(record => {
+                const date = record.cart_id ? formatDateTime(record.purchase_date) : formatDateTime(record.report_date);
+                const type = record.cart_id ? "Purchase" : "Report";
+                const details = record.cart_id ? `Order #${record.cart_id}` : `Report #${record.report_id}`;
+                const product = record.cart_id ? record.prod_name : record.reported_product;
+                const quantity = record.quantity || 0;
+                const amount = record.cart_id ? formatCurrency(record.total_price) : "N/A";
+                const status = record.cart_id ? "Completed" : record.report_status;
+                const store = record.cart_id ? record.store_name : record.reported_shop;
+
+                csv += `"${date}","${type}","${details}","${product}","${quantity}","${amount}","${status}","${store}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            triggerDownload(blob, `${fileName}.csv`);
+        }
+
+        // Download as PDF
+        function downloadPDF(fileName) {
+            const doc = new jsPDF();
+
+            // Report title
+            doc.setFontSize(16);
+            doc.text('Customer History Report', 105, 15, { align: 'center' });
+
+            // Customer details
+            doc.setFontSize(10);
+            doc.text(`Email: ${customerData.email}`, 14, 25);
+            doc.text(`Phone: ${customerData.telephone}`, 14, 30);
+            doc.text(`Account Created: ${formatDateTime(customerData.account_created)}`, 14, 35);
+            doc.text(`Last Login: ${formatDateTime(customerData.last_login)}`, 14, 40);
+
+            // History table headers
+            const headers = [
+                "Date", "Type", "Details", "Product", "Qty", "Amount", "Status", "Store"
+            ];
+
+            // Prepare data rows
+            const rows = historyData.map(record => {
+                const date = record.cart_id ? formatDateTime(record.purchase_date) : formatDateTime(record.report_date);
+                const type = record.cart_id ? "Purchase" : "Report";
+                const details = record.cart_id ? `Order #${record.cart_id}` : `Report #${record.report_id}`;
+                const product = record.cart_id ? record.prod_name : record.reported_product;
+                const quantity = record.quantity || 0;
+                const amount = record.cart_id ? formatCurrency(record.total_price) : "N/A";
+                const status = record.cart_id ? "Completed" : record.report_status;
+                const store = record.cart_id ? record.store_name : record.reported_shop;
+
+                return [date, type, details, product, quantity, amount, status, store];
+            });
+
+            // Create table
+            doc.autoTable({
+                head: [headers],
+                body: rows,
+                startY: 45,
+                margin: { top: 45 },
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [44, 62, 80] },
+                columnStyles: {
+                    0: { cellWidth: 25 },
+                    1: { cellWidth: 15 },
+                    2: { cellWidth: 25 },
+                    3: { cellWidth: 30 },
+                    4: { cellWidth: 10 },
+                    5: { cellWidth: 20 },
+                    6: { cellWidth: 20 },
+                    7: { cellWidth: 25 }
+                },
+                didDrawPage: function (data) {
+                    // Footer
+                    doc.setFontSize(8);
+                    doc.setTextColor(150);
+                    doc.text(
+                        `Page ${data.pageCount}`,
+                        data.settings.margin.left,
+                        doc.internal.pageSize.height - 10
+                    );
+                }
+            });
+
+            doc.save(`${fileName}.pdf`);
+        }
+
+        // Download as Excel
+        function downloadExcel(fileName) {
+            const wb = XLSX.utils.book_new();
+
+            // Customer sheet
+            const customerSheetData = [
+                ["Customer Details"],
+                ["Email", customerData.email],
+                ["Phone", customerData.telephone],
+                ["Account Created", formatDateTime(customerData.account_created)],
+                ["Last Login", formatDateTime(customerData.last_login)],
+                [],
+                ["History Report", "", "", "", "", "", "", ""],
+                ["Generated On", new Date().toLocaleString(), "", "", "", "", "", ""]
+            ];
+
+            const customerWS = XLSX.utils.aoa_to_sheet(customerSheetData);
+            XLSX.utils.book_append_sheet(wb, customerWS, "Customer");
+
+            // History sheet
+            const historyHeader = [
+                ["Date", "Type", "Details", "Product", "Quantity", "Amount", "Status", "Store"]
+            ];
+
+            // Convert history data to worksheet format
+            const historyRows = historyData.map(record => {
+                const date = record.cart_id ? formatDateTime(record.purchase_date) : formatDateTime(record.report_date);
+                const type = record.cart_id ? "Purchase" : "Report";
+                const details = record.cart_id ? `Order #${record.cart_id}` : `Report #${record.report_id}`;
+                const product = record.cart_id ? record.prod_name : record.reported_product;
+                const quantity = record.quantity || 0;
+                const amount = record.cart_id ? formatCurrency(record.total_price) : "N/A";
+                const status = record.cart_id ? "Completed" : record.report_status;
+                const store = record.cart_id ? record.store_name : record.reported_shop;
+
+                return [date, type, details, product, quantity, amount, status, store];
+            });
+
+            // Combine header and rows
+            const historySheetData = [...historyHeader, ...historyRows];
+
+            const historyWS = XLSX.utils.aoa_to_sheet(historySheetData);
+            XLSX.utils.book_append_sheet(wb, historyWS, "History");
+
+            XLSX.writeFile(wb, `${fileName}.xlsx`);
+        }
+
+        // Download as JSON
+        function downloadJSON(fileName) {
+            const report = {
+                customer: {
+                    email: customerData.email,
+                    phone: customerData.telephone,
+                    account_created: customerData.account_created,
+                    last_login: customerData.last_login
+                },
+                history: historyData.map(record => {
+                    return {
+                        date: record.cart_id ? formatDateTime(record.purchase_date) : formatDateTime(record.report_date),
+                        type: record.cart_id ? "Purchase" : "Report",
+                        details: record.cart_id ? `Order #${record.cart_id}` : `Report #${record.report_id}`,
+                        product: record.cart_id ? record.prod_name : record.reported_product,
+                        quantity: record.quantity || 0,
+                        amount: record.cart_id ? formatCurrency(record.total_price) : "N/A",
+                        status: record.cart_id ? "Completed" : record.report_status,
+                        store: record.cart_id ? record.store_name : record.reported_shop
+                    };
+                }),
+                summary: {
+                    total_records: historyData.length,
+                    purchase_count: historyData.filter(r => r.cart_id).length,
+                    report_count: historyData.filter(r => r.report_id).length,
+                    generated_on: new Date().toISOString()
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            triggerDownload(blob, `${fileName}.json`);
+        }
+
+        // Trigger file download
+        function triggerDownload(blob, fileName) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manufacturer Dashboard</title>
+    <style>
+        /* Improved table styling */
+        #productsList {
+            overflow-y: auto;
+            max-height: calc(80vh - 100px);
+            margin-top: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        #productsList table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: auto;
+            /* Changed to auto for better column sizing */
+        }
+
+        #productsList thead {
+            position: sticky;
+            top: 0;
+            background-color: #3498db;
+            color: white;
+            z-index: 10;
+        }
+
+        #productsList th,
+        #productsList td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            word-wrap: break-word;
+        }
+
+        #productsList th {
+            font-weight: 600;
+        }
+
+        #productsList tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        #productsList .expired {
+            background-color: #ffebee !important;
+        }
+
+        #productsList .expiring-soon {
+            background-color: #fff3e0 !important;
+        }
+
+        #productsList .valid {
+            background-color: #e8f5e9 !important;
+        }
+
+        /* Scrollbar styling */
+        #productsList::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        #productsList::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        #productsList::-webkit-scrollbar-thumb {
+            background: #3498db;
+            border-radius: 4px;
+        }
+
+        #productsList::-webkit-scrollbar-thumb:hover {
+            background: #2980b9;
+        }
+
+        /* Action buttons */
+        .table-action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 2px;
+            white-space: nowrap;
+        }
+
+        .update-btn {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .delete-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        /* Your existing CSS styles remain the same */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+
+        .content-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .dashboard-title {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .action-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 900px;
+            position: relative;
+            animation: modalopen 0.4s;
+            max-height: 90vh;
+            overflow-y: auto;
+            /* ✅ Enable scrolling inside the modal */
+        }
+
+
+        @keyframes modalopen {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .close {
+            color: #aaa;
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        #scannerContainer {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #scannerFeed {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        #scanResult {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .product-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .product-item:hover {
+            background: #e9ecef;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .submit-button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+
+        .submit-button:hover {
+            background-color: #27ae60;
+        }
+
+        /* Status badges */
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 8px;
+        }
+
+        .expired-badge {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .expiring-badge {
+            background-color: #ff9800;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content-container">
+        <h1 class="dashboard-title">Manufacturer Dashboard</h1>
+        <div class="action-buttons">
+            <button id="scanProductBtn" class="action-button">
+                <i class="fas fa-barcode"></i> Scan New Products
+            </button>
+            <button id="viewProductsBtn" class="action-button">
+                <i class="fas fa-boxes"></i> View My Products
+            </button>
+            <button id="updateProductBtn" class="action-button">
+                <i class="fas fa-edit"></i> Update Product Prices
+            </button>
+            <button id="deleteProductBtn" class="action-button">
+                <i class="fas fa-trash"></i> Delete Product
+            </button>
+            <button id="checkExpiryBtn" class="action-button" style="background-color: #ff9800;">
+                <i class="fas fa-clock"></i> Check Product Expiry
+            </button>
+            <button id="generateReportBtn" class="action-button" style="background-color: #9b59b6;">
+                <i class="fas fa-file-download"></i> Generate Product Report
+            </button>
+
+            <button id="logoutBtn" class="action-button" style="background-color: #e74c3c;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+
+        </div>
+    </div>
+
+    <!-- Scan Product Modal -->
+    <div id="scanModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Scan Product Barcode</h2>
+
+            <div style="text-align: center; margin: 20px 0;">
+                <p>Scan barcode using your USB scanner</p>
+                <input type="text" id="barcodeInput" style="width: 80%; padding: 12px; font-size: 16px;"
+                    placeholder="Click here and scan barcode" autofocus>
+                <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                    Note: The scanner should be in keyboard emulation mode (most USB scanners default to this)
+                </p>
+            </div>
+
+            <div id="scanResult"></div>
+            <button id="scanAnotherBtn" class="submit-button" style="display: none; margin-top: 15px;">
+                Scan Another Product
+            </button>
+        </div>
+    </div>
+
+    <!-- View Products Modal -->
+    <div id="productsModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>My Products</h2>
+            <div id="productsList"></div>
+        </div>
+    </div>
+
+    <!-- Update Price Modal -->
+    <div id="updateModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Update Product Price</h2>
+            <div class="form-container">
+                <div class="form-group">
+                    <label for="updatePrice">New Price (R):</label>
+                    <input type="number" id="updatePrice" placeholder="Enter new price" min="0" step="0.01" required>
+                </div>
+                <button class="submit-button" id="confirmUpdateBtn">Update Price</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get manufacturer data
+        const manufacturer = {
+            license_key: prompt("Enter your manufacturer license key (e.g., 1001):") || 1001,
+            name: "Your Company"
+        };
+
+        // DOM Elements
+        const scanModal = document.getElementById('scanModal');
+        const productsModal = document.getElementById('productsModal');
+        const updateModal = document.getElementById('updateModal');
+        const barcodeInput = document.getElementById('barcodeInput');
+        const scanResult = document.getElementById('scanResult');
+        const scanAnotherBtn = document.getElementById('scanAnotherBtn');
+        let currentBarcode = null;
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function () {
+            //report button 
+            document.getElementById('generateReportBtn').addEventListener('click', () => {
+                window.open(`/report_page?license_key=${manufacturer.license_key}`, '_blank');
+            });
+            // Button event listeners
+            document.getElementById('scanProductBtn').addEventListener('click', openScanner);
+            document.getElementById('viewProductsBtn').addEventListener('click', viewProducts);
+            document.getElementById('updateProductBtn').addEventListener('click', () => alert('Select a product to update from View Products'));
+            document.getElementById('deleteProductBtn').addEventListener('click', () => alert('Select a product to delete from View Products'));
+            document.getElementById('checkExpiryBtn').addEventListener('click', checkExpiry);
+            document.getElementById('confirmUpdateBtn').addEventListener('click', updateProductPrice);
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+            scanAnotherBtn.addEventListener('click', resetScanner);
+
+            // Barcode input handling
+            barcodeInput.addEventListener('keydown', function (e) {
+                // Most barcode scanners send the barcode followed by Enter key
+                if (e.key === 'Enter') {
+                    const barcode = barcodeInput.value.trim();
+                    if (barcode.length > 0) {
+                        currentBarcode = barcode;
+                        handleScannedBarcode(barcode);
+                        barcodeInput.value = '';
+                    }
+                }
+            });
+
+            // Close modal when clicking X
+            document.querySelectorAll('.close').forEach(btn => {
+                btn.addEventListener('click', closeModals);
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function (event) {
+                if (event.target === scanModal || event.target === productsModal || event.target === updateModal) {
+                    closeModals();
+                }
+            });
+        });
+
+        function closeModals() {
+            scanModal.style.display = 'none';
+            productsModal.style.display = 'none';
+            updateModal.style.display = 'none';
+        }
+
+        function resetScanner() {
+            scanResult.innerHTML = '';
+            scanAnotherBtn.style.display = 'none';
+            barcodeInput.focus();
+        }
+
+        function openScanner() {
+            scanModal.style.display = 'block';
+            scanResult.innerHTML = '';
+            scanAnotherBtn.style.display = 'none';
+            barcodeInput.value = '';
+            barcodeInput.focus();
+        }
+        //handle scans
+        function handleScannedBarcode(barcode) {
+            fetch(`/get_product_data/${barcode}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const imageHtml = data.product.image_exists
+                            ? `<img src="${data.product.prod_image_url}" 
+                         style="max-width: 100px; max-height: 100px; display: block; margin: 0 auto 15px; border-radius: 5px;"
+                         onerror="this.onerror=null;this.src='/static/images/default-product.jpg'">`
+                            : '<div style="height: 100px; display: flex; align-items: center; justify-content: center; color: #777; margin-bottom: 15px;">No image available</div>';
+
+                        scanResult.innerHTML = `
+                    <div style="display: flex; flex-direction: column; height: 100%;">
+                        <div style="flex: 1; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 5px 5px 0 0;">
+                            ${imageHtml}
+                            <h3 style="text-align: center; margin-top: 0;">Scanned Product</h3>
+                            <div style="text-align: left;">
+                                <p><strong>Name:</strong> ${data.product.prod_name}</p>
+                                <p><strong>Price:</strong> R${parseFloat(data.product.prod_price).toFixed(2)}</p>
+                                <p><strong>Expiry Date:</strong> ${data.product.prod_expiry_date}</p>
+                                <p><strong>Quantity:</strong> ${data.product.prod_quantity}</p>
+                            </div>
+                        </div>
+                        <div style="padding: 15px; background: white; border-top: 1px solid #ddd; border-radius: 0 0 5px 5px;">
+                            <button id="confirmAddBtn" class="submit-button" style="width: 100%;">
+                                Confirm Add to Inventory
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                        document.getElementById('confirmAddBtn').addEventListener('click', function () {
+                            const productData = {
+                                barcode: barcode,
+                                license_key: manufacturer.license_key
+                            };
+                            addProduct(productData);
+                        });
+                    } else {
+                        scanResult.innerHTML = `
+                    <div style="padding: 15px; background: #ffecec; border-radius: 5px;">
+                        <p>Scanned Barcode: <strong>${barcode}</strong></p>
+                        <p style="color: #e74c3c; font-weight: 500;">${data.message}</p>
+                    </div>
+                `;
+                    }
+                });
+        }
+
+        function addProduct(productData) {
+            fetch('/add_product', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(productData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        scanResult.innerHTML = `
+                        <div style="padding: 15px; background: #e8f8f0; border-radius: 5px;">
+                            <p style="color: #27ae60; font-weight: 500; font-size: 18px;">
+                                <i class="fas fa-check-circle"></i> Product added successfully!
+                            </p>
+                            <div style="margin-top: 15px; text-align: left;">
+                                <p><strong>Name:</strong> ${data.product.prod_name}</p>
+                                <p><strong>Price:</strong> R${parseFloat(data.product.prod_price).toFixed(2)}</p>
+                                <p><strong>Expiry Date:</strong> ${data.product.prod_expiry_date}</p>
+                                <p><strong>Quantity Added:</strong> ${data.product.prod_quantity}</p>
+                            </div>
+                        </div>
+                    `;
+                        scanAnotherBtn.style.display = 'block';
+                    } else {
+                        scanResult.innerHTML = `
+                        <div style="padding: 15px; background: #ffecec; border-radius: 5px;">
+                            <p style="color: #e74c3c; font-weight: 500;">Error: ${data.message}</p>
+                        </div>
+                    `;
+                    }
+                });
+        }
+
+        function viewProducts() {
+            productsModal.style.display = 'block';
+            fetchProducts();
+        }
+
+        //fetch the products
+        function fetchProducts(callback = null) {
+            fetch(`/get_products?license_key=${manufacturer.license_key}`)
+                .then(response => response.json())
+                .then(products => {
+                    const container = document.getElementById('productsList');
+                    container.innerHTML = '';
+
+                    if (products.length === 0) {
+                        container.innerHTML = '<p style="padding: 20px; text-align: center;">No products found in your inventory</p>';
+                        if (callback) callback();
+                        return;
+                    }
+
+                    const table = document.createElement('table');
+
+                    // Table header
+                    const thead = document.createElement('thead');
+                    thead.innerHTML = `
+                <tr>
+                    <th>Name</th>
+                    <th>Barcode</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Expiry Date</th>
+                    <th>Manufactured</th>
+                    <th>Actions</th>
+                </tr>
+            `;
+                    table.appendChild(thead);
+
+                    // Table body
+                    const tbody = document.createElement('tbody');
+                    const today = new Date();
+
+                    products.forEach(product => {
+                        const row = document.createElement('tr');
+                        row.dataset.barcode = product.prod_barcode;
+
+                        const expiryDate = new Date(product.prod_expiry_date);
+                        const daysRemaining = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+
+                        let expiryDisplay = expiryDate.toLocaleDateString();
+                        let statusClass = 'valid';
+                        let statusBadge = '';
+
+                        if (daysRemaining < 0) {
+                            statusClass = 'expired';
+                            statusBadge = `<span class="status-badge expired-badge">EXPIRED</span>`;
+                        } else if (daysRemaining <= 30) {
+                            statusClass = 'expiring-soon';
+                            statusBadge = `<span class="status-badge expiring-badge">Expires in ${daysRemaining} days</span>`;
+                        }
+
+                        // Create action buttons
+                        const updateBtn = document.createElement('button');
+                        updateBtn.textContent = 'Update';
+                        updateBtn.className = 'table-action-btn update-btn';
+                        updateBtn.addEventListener('click', () => prepareUpdate(product.prod_barcode, product.prod_price));
+
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.textContent = 'Delete';
+                        deleteBtn.className = 'table-action-btn delete-btn';
+                        deleteBtn.addEventListener('click', () => deleteProduct(product.prod_barcode));
+
+                        const actionsCell = document.createElement('td');
+                        actionsCell.style.whiteSpace = 'nowrap';
+                        actionsCell.appendChild(updateBtn);
+                        actionsCell.appendChild(deleteBtn);
+
+                        // Create row content
+                        row.innerHTML = `
+                    <td>${product.prod_name}</td>
+                    <td>${product.prod_barcode}</td>
+                    <td>R${parseFloat(product.prod_price).toFixed(2)}</td>
+                    <td>${product.prod_quantity}</td>
+                    <td>${expiryDisplay} ${statusBadge}</td>
+                    <td>${new Date(product.prod_manu_date).toLocaleDateString()}</td>
+                `;
+                        row.className = statusClass;
+                        row.appendChild(actionsCell);
+                        tbody.appendChild(row);
+                    });
+
+                    table.appendChild(tbody);
+                    container.appendChild(table);
+
+                    if (callback) callback();
+                })
+                .catch(error => {
+                    console.error('Error fetching products:', error);
+                    document.getElementById('productsList').innerHTML = `
+                <div style="padding: 15px; background: #ffecec; border-radius: 5px; color: #e74c3c;">
+                    Error loading products. Please try again.
+                </div>
+            `;
+                    if (callback) callback();
+                });
+        }
+
+        function checkExpiry() {
+            productsModal.style.display = 'block';
+            fetchProducts(function () {
+                const today = new Date();
+                const productsList = document.getElementById('productsList');
+                const rows = productsList.querySelectorAll('tbody tr');
+
+                let expiredCount = 0;
+                let expiringSoonCount = 0;
+
+                rows.forEach(row => {
+                    if (row.classList.contains('expired')) {
+                        expiredCount++;
+                    } else if (row.classList.contains('expiring-soon')) {
+                        expiringSoonCount++;
+                    }
+                });
+
+                if (expiredCount > 0 || expiringSoonCount > 0) {
+                    alert(`Found:\n- ${expiredCount} expired products (marked in red)\n- ${expiringSoonCount} products expiring soon (marked in orange)`);
+                } else {
+                    alert('All your products are currently valid!');
+                }
+            });
+        }
+
+        function prepareUpdate(barcode, currentPrice) {
+            currentBarcode = barcode;
+            document.getElementById('updatePrice').value = currentPrice;
+            updateModal.style.display = 'block';
+            productsModal.style.display = 'none';
+        }
+
+        function updateProductPrice() {
+            const newPrice = document.getElementById('updatePrice').value;
+            if (!newPrice || isNaN(newPrice)) {
+                alert('Please enter a valid price');
+                return;
+            }
+
+            const productData = {
+                barcode: currentBarcode,
+                price: newPrice,
+                license_key: manufacturer.license_key
+            };
+
+            fetch('/update_product', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(productData)
+            })
+                .then(response => {
+                    // First check if the response is JSON
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        return response.text().then(text => {
+                            throw new Error(`Expected JSON but got: ${text.substring(0, 100)}...`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        alert('Product price updated successfully!');
+                        document.getElementById('updatePrice').value = '';
+                        updateModal.style.display = 'none';
+                        fetchProducts();
+                    } else {
+                        alert('Error: ' + (data.message || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Update error:', error);
+                    alert('Error updating product: ' + error.message);
+                });
+        }
+
+        function deleteProduct(barcode) {
+            if (confirm(`Are you sure you want to delete product with barcode ${barcode}?`)) {
+                fetch(`/delete_product/${barcode}?license_key=${manufacturer.license_key}`, {
+                    method: 'DELETE'
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Product deleted successfully');
+                            fetchProducts(); // Refresh the product list
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error deleting product: ' + error.message);
+                    });
+            }
+        }
+        function logout() {
+            fetch('/logout_manufacturer', {
+                method: 'POST'
+            })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = '/';
+                    }
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                });
+        }
+    </script>
+
+    <!-- Add Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</body>
+
+</html>

@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up - Manufacturer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .form-group {
+      margin: 15px 0;
+    }
+
+    input {
+      width: 300px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      display: block;
+      margin: 0 auto;
+    }
+
+    button {
+      padding: 12px 24px;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 10px 0;
+      font-size: 16px;
+      width: 160px;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    a {
+      text-decoration: none;
+      color: #28a745;
+    }
+
+    #message {
+      margin: 15px 0;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+    }
+
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Manufacturer Sign Up</h1>
+  
+  <div id="message"></div>
+
+  <form id="signupForm">
+    <div class="form-group">
+      <input type="text" name="license_key" placeholder="LicenseKey" required>
+    </div>
+
+    <div class="form-group">
+      <input type="text" name="company_name" placeholder="Company Name" required>
+    </div>
+
+    <div class="form-group">
+      <input type="text" name="address" placeholder="Address" required>
+    </div>
+
+    <div class="form-group">
+      <input type="text" name="location" placeholder="Location" required>
+    </div>
+
+    <div class="form-group">
+      <input type="password" name="password" placeholder="Password" required>
+    </div>
+
+    <button type="submit">Sign Up</button>
+  </form>
+  <a href="/login_manufacturer">Back to Login</a>
+
+  <script>
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      const messageDiv = document.getElementById('message');
+      
+      try {
+        const response = await fetch('/signup_manufacturer', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          messageDiv.textContent = data.message;
+          messageDiv.className = 'success';
+          messageDiv.style.display = 'block';
+          
+          // Redirect after 2 seconds
+          setTimeout(() => {
+            window.location.href = data.redirect;
+          }, 2000);
+        } else {
+          messageDiv.textContent = data.message;
+          messageDiv.className = 'error';
+          messageDiv.style.display = 'block';
+        }
+      } catch (error) {
+        messageDiv.textContent = 'An error occurred. Please try again.';
+        messageDiv.className = 'error';
+        messageDiv.style.display = 'block';
+        console.error('Error:', error);
+      }
+    });
+  </script>
+</body>
+</html>

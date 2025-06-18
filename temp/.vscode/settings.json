@@ -1,0 +1,47 @@
+{
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "Spaza",
+            "database": "spaza_safe",
+            "username": "mbambo",
+            "password": "Mbambo1307#a",
+            "connectionTimeout": 20
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "10.2.39.153",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "Spaza.Safe",
+            "database": "spaza_safe",
+            "username": "toolz",
+            "password": "123456"
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "10.2.47.214",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "Spaza.Safe",
+            "database": "spaza_safe",
+            "username": "lisa",
+            "password": "1234"
+        }
+    ]
+}

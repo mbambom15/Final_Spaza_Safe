@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard - Safe.Spaza</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --light-bg: #f4f7fc;
+            --light-card: #ffffff;
+            --accent: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-radius: 12px;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding: 20px;
+            background-image: radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.05) 0%, transparent 20%);
+        }
+
+        .logo {
+            background: linear-gradient(90deg, var(--accent), #4f46e5);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .menu-bar {
+            background-color: var(--text-dark);
+        }
+
+        .menu-dropdown {
+            background-color: var(--light-card);
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-dropdown button {
+            background: linear-gradient(135deg, var(--accent), #4f46e5);
+            color: white;
+        }
+
+        .dashboard-title h1 {
+            background: linear-gradient(90deg, var(--text-dark), #4f46e5);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dashboard-title p {
+            color: var(--text-muted);
+        }
+
+        .action-card {
+            background: var(--light-card);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .action-icon {
+            font-size: 40px;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .action-card h3 {
+            color: var(--text-dark);
+        }
+
+        .action-card p {
+            color: var(--text-muted);
+        }
+
+        .stats-container {
+            background: var(--light-card);
+            border: 1px solid var(--border);
+            border-radius: var(--border-radius);
+            padding: 25px;
+        }
+
+        .stat-card {
+            background: #f1f5f9;
+        }
+
+        .stat-value {
+            background: linear-gradient(90deg, var(--accent), #4f46e5);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+        }
+
+        .footer {
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+        }
+
+        @media (max-width: 768px) {
+            .action-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .menu-container {
+                position: absolute;
+                top: 25px;
+                right: 20px;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <div class="logo">SAFE.SPAZA</div>
+            <div class="menu-container" onclick="toggleMenu()">
+                <div class="menu-bar"></div>
+                <div class="menu-bar"></div>
+                <div class="menu-bar"></div>
+            </div>
+        </div>
+
+        <div class="menu-dropdown" id="menuDropdown">
+            <button onclick="goBackToLogin()">
+                <i class="fas fa-arrow-left"></i> Back to Login
+            </button>
+        </div>
+
+        <div class="dashboard-title">
+            <h1>Customer Dashboard</h1>
+            <p>Welcome back! Manage your product scanning and history</p>
+        </div>
+
+        <div class="action-grid">
+            <div class="action-card" onclick="goToScan()">
+                <div class="action-icon">
+                    <i class="fas fa-camera"></i>
+                </div>
+                <h3>Scan Barcode</h3>
+                <p>Scan product barcodes to verify authenticity and safety</p>
+            </div>
+
+            <div class="action-card" onclick="viewHistory()">
+                <div class="action-icon">
+                    <i class="fas fa-history"></i>
+                </div>
+                <h3>View History</h3>
+                <p>Review your previous scans and product information</p>
+            </div>
+
+            <div class="action-card" onclick="logout()">
+                <div class="action-icon">
+                    <i class="fas fa-sign-out-alt"></i>
+                </div>
+                <h3>Logout</h3>
+                <p>Securely sign out from your Safe.Spaza account</p>
+            </div>
+        </div>
+        <script>
+            // Toggle menu function
+            function toggleMenu() {
+                const menu = document.getElementById('menuDropdown');
+                const menuIcon = document.querySelector('.menu-container');
+
+                menu.classList.toggle('active');
+                menuIcon.classList.toggle('active');
+            }
+
+            // Navigation functions
+            function goToScan() {
+                window.location.href = "/scan";
+            }
+
+            function viewHistory() {
+                window.location.href = "/history";
+            }
+
+            function logout() {
+                window.location.href = "/logout";
+            }
+
+            function goBackToLogin() {
+                window.location.href = '/spazalogin';
+            }
+
+            // Close menu when clicking outside
+            document.addEventListener('click', function (event) {
+                const menu = document.getElementById('menuDropdown');
+                const menuIcon = document.querySelector('.menu-container');
+
+                if (menu.classList.contains('active') &&
+                    !menu.contains(event.target) &&
+                    !menuIcon.contains(event.target)) {
+                    menu.classList.remove('active');
+                    menuIcon.classList.remove('active');
+                }
+            });
+        </script>
+</body>
+
+</html>

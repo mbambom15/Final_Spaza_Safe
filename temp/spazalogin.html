@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Safe.Spaza Login</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-image: url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      color: #333;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      /* Dark overlay for better readability */
+      z-index: -1;
+    }
+
+    .container {
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 30px 40px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      transition: all 0.3s ease;
+      z-index: 1;
+    }
+
+    .container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+    }
+
+    .logo {
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      color: #28a745;
+      font-size: 2.5rem;
+      margin-bottom: 25px;
+      font-weight: 600;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .radio-group {
+      text-align: left;
+      margin: 25px 0;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 10px;
+      border-left: 4px solid #28a745;
+    }
+
+    .radio-option {
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      padding: 8px 5px;
+      border-radius: 5px;
+    }
+
+    .radio-option:hover {
+      background-color: #e9ecef;
+    }
+
+    .radio-option input {
+      margin-right: 12px;
+      cursor: pointer;
+      width: 18px;
+      height: 18px;
+    }
+
+    .radio-option label {
+      font-size: 16px;
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+
+    .radio-option i {
+      margin-right: 10px;
+      color: #28a745;
+    }
+
+    .form-group {
+      margin: 15px 0;
+    }
+
+    button {
+      padding: 12px 24px;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      transition: all 0.3s;
+      box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button i {
+      margin-right: 8px;
+    }
+
+    button:hover {
+      background-color: #218838;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 8px rgba(40, 167, 69, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+
+
+    .button-group {
+      margin-top: 20px;
+    }
+
+    .government-icon {
+      color: #1a237e;
+      /* Deep blue color for government */
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="logo">
+      <i class="fas fa-store" style="font-size: 48px; color: #28a745;"></i>
+    </div>
+    <h1>Safe.Spaza</h1>
+
+    <!-- Radio Buttons -->
+    <div class="radio-group">
+      <div class="radio-option">
+        <input type="radio" id="customer" name="userType" value="customer">
+        <label for="customer"><i class="fas fa-user"></i> Customer</label>
+      </div>
+      <div class="radio-option">
+        <input type="radio" id="manufacturer" name="userType" value="manufacturer">
+        <label for="manufacturer"><i class="fas fa-industry"></i> Manufacturer</label>
+      </div>
+      <div class="radio-option">
+        <input type="radio" id="spazaOwner" name="userType" value="spazaOwner">
+        <label for="spazaOwner"><i class="fas fa-store-alt"></i> Spaza Owner</label>
+      </div>
+      <div class="radio-option">
+        <input type="radio" id="government" name="userType" value="government">
+        <label for="government"><i class="fas fa-landmark government-icon"></i> Government Authority</label>
+      </div>
+    </div>
+
+    <!-- Customer Button -->
+    <div id="customerBtn" class="hidden button-group">
+      <button onclick="location.href='/login_customer'"><i class="fas fa-user"></i> Login</button>
+      <button onclick="location.href='/dashboard'"><i class="fas fa-sign-in-alt"></i> Continue as Customer</button>
+    </div>
+
+    <!-- Login and Register Buttons for Manufacturer or Spaza Owner -->
+    <div id="authButtons" class="hidden button-group">
+      <button id="loginBtn"><i class="fas fa-sign-in-alt"></i> Login</button>
+      <button id="signupBtn"><i class="fas fa-user-plus"></i> Sign Up</button>
+    </div>
+
+    <div id="governmentBtn" class="hidden button-group">
+      <button id="govLoginBtn"><i class="fas fa-sign-in-alt"></i> Government Login</button>
+    </div>
+
+  </div>
+
+  <script>
+    const radioButtons = document.querySelectorAll('input[name="userType"]');
+    const customerBtn = document.getElementById('customerBtn');
+    const authButtons = document.getElementById('authButtons');
+    const loginBtn = document.getElementById('loginBtn');
+    const signupBtn = document.getElementById('signupBtn');
+    const governmentBtn = document.getElementById('governmentBtn');
+    const govLoginBtn = document.getElementById('govLoginBtn');
+
+
+    let selectedUser = '';
+
+    radioButtons.forEach(radio => {
+      radio.addEventListener('change', () => {
+        selectedUser = radio.value;
+        if (selectedUser === 'customer') {
+          customerBtn.classList.remove('hidden');
+          authButtons.classList.add('hidden');
+          governmentBtn.classList.add('hidden');
+        } else if (selectedUser === 'government') {
+          governmentBtn.classList.remove('hidden');
+          customerBtn.classList.add('hidden');
+          authButtons.classList.add('hidden');
+        } else {
+          authButtons.classList.remove('hidden');
+          customerBtn.classList.add('hidden');
+          governmentBtn.classList.add('hidden');
+        }
+      });
+    });
+
+    // Add government login handler
+    govLoginBtn.addEventListener('click', () => {
+      window.location.href = '/login_government';
+    });
+
+    loginBtn.addEventListener('click', () => {
+      if (selectedUser === 'manufacturer') {
+        window.location.href = '/login_manufacturer';
+      } else if (selectedUser === 'spazaOwner') {
+        window.location.href = '/login_spazaOwner';
+      }
+    });
+
+    signupBtn.addEventListener('click', () => {
+      if (selectedUser === 'manufacturer') {
+        window.location.href = '/signup_manufacturer';
+      } else if (selectedUser === 'spazaOwner') {
+        window.location.href = '/signup_spazaOwner';
+      }
+    });
+
+
+  </script>
+
+</body>
+
+</html>

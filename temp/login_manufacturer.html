@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Manufacturer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f2f2f2;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .form-group {
+      margin: 10px 0;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    button:hover {
+      background-color: #218838;
+    }
+
+    a {
+      text-decoration: none;
+      color: #28a745;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+
+    <h1>Manufacturer Login</h1>
+
+    <form id="loginForm" method="POST" action="/login_manufacturer">
+
+      <div class="form-group">
+
+        <input type="text" name="username" placeholder="Username" required>
+
+      </div>
+
+      <div class="form-group">
+
+        <input type="password" name="password" placeholder="Password" required>
+
+      </div>
+
+      <button type="submit">Login</button>
+
+    </form>
+    <p><a href="/update_password_manufacturer">Forgot password</a></a>
+    <!--<a href="signup-manufacturer.html">Sign Up as Manufacturer</a>-->
+  </div>
+  <script>
+    // Event listener for the login form submission
+    const loginForm = document.getElementById('loginForm');
+    
+    loginForm.addEventListener('submit', async function(event) {
+      event.preventDefault(); // Prevent the default form submission
+      
+      // Create a message element for feedback
+      const messageDiv = document.createElement('div');
+      messageDiv.style.margin = '10px 0';
+      messageDiv.style.padding = '10px';
+      messageDiv.style.borderRadius = '5px';
+      
+      try {
+        // Get form data
+        const formData = new FormData(loginForm);
+        
+        // Send login request to server
+        const response = await fetch('/login_manufacturer', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          // Login successful - show success message
+          messageDiv.textContent = "Login successful! Redirecting...";
+          messageDiv.style.backgroundColor = '#d4edda';
+          messageDiv.style.color = '#155724';
+          
+          // Store user data in sessionStorage
+          if (data.user) {
+            sessionStorage.setItem('manufacturer', JSON.stringify(data.user));
+          }
+          
+          // Redirect to dashboard after 1 second
+          setTimeout(() => {
+            window.location.href = data.redirect || '/manudashboard';
+          }, 1000);
+        } else {
+          // Login failed - show error message
+          messageDiv.textContent = data.message || "Invalid username or password";
+          messageDiv.style.backgroundColor = '#f8d7da';
+          messageDiv.style.color = '#721c24';
+        }
+        
+        // Remove any existing messages
+        const existingMessage = document.querySelector('.login-message');
+        if (existingMessage) existingMessage.remove();
+        
+        // Add the message to the DOM
+        messageDiv.classList.add('login-message');
+        loginForm.parentNode.insertBefore(messageDiv, loginForm.nextSibling);
+        
+      } catch (error) {
+        console.error('Login error:', error);
+        alert('An error occurred during login. Please try again.');
+      }
+    });
+  </script>
+
+</body>
+
+</html>
