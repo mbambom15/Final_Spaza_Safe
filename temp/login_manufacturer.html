@@ -7,6 +7,41 @@
   <title>Login - Manufacturer</title>
   <style>
     body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-image: url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: #333;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: -1;
+    }
+
+    .login-container {
+      background-color: rgba(255, 255, 255, 0.95);
+      /* rest of your styles */
+      z-index: 1;
+      /* Ensure it's above the overlay */
+    }
+
+    body {
       font-family: Arial, sans-serif;
       background-color: #f2f2f2;
       margin: 0;
@@ -80,44 +115,44 @@
 
     </form>
     <p><a href="/update_password_manufacturer">Forgot password</a></a>
-    <!--<a href="signup-manufacturer.html">Sign Up as Manufacturer</a>-->
+      <!--<a href="signup-manufacturer.html">Sign Up as Manufacturer</a>-->
   </div>
   <script>
     // Event listener for the login form submission
     const loginForm = document.getElementById('loginForm');
-    
-    loginForm.addEventListener('submit', async function(event) {
+
+    loginForm.addEventListener('submit', async function (event) {
       event.preventDefault(); // Prevent the default form submission
-      
+
       // Create a message element for feedback
       const messageDiv = document.createElement('div');
       messageDiv.style.margin = '10px 0';
       messageDiv.style.padding = '10px';
       messageDiv.style.borderRadius = '5px';
-      
+
       try {
         // Get form data
         const formData = new FormData(loginForm);
-        
+
         // Send login request to server
         const response = await fetch('/login_manufacturer', {
           method: 'POST',
           body: formData
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
           // Login successful - show success message
           messageDiv.textContent = "Login successful! Redirecting...";
           messageDiv.style.backgroundColor = '#d4edda';
           messageDiv.style.color = '#155724';
-          
+
           // Store user data in sessionStorage
           if (data.user) {
             sessionStorage.setItem('manufacturer', JSON.stringify(data.user));
           }
-          
+
           // Redirect to dashboard after 1 second
           setTimeout(() => {
             window.location.href = data.redirect || '/manudashboard';
@@ -128,15 +163,15 @@
           messageDiv.style.backgroundColor = '#f8d7da';
           messageDiv.style.color = '#721c24';
         }
-        
+
         // Remove any existing messages
         const existingMessage = document.querySelector('.login-message');
         if (existingMessage) existingMessage.remove();
-        
+
         // Add the message to the DOM
         messageDiv.classList.add('login-message');
         loginForm.parentNode.insertBefore(messageDiv, loginForm.nextSibling);
-        
+
       } catch (error) {
         console.error('Login error:', error);
         alert('An error occurred during login. Please try again.');

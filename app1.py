@@ -1,4 +1,4 @@
-
+import re
 from flask import Flask, render_template, Response, request, redirect, url_for, jsonify, session
 from datetime import datetime, date
 from flask import url_for
@@ -123,6 +123,7 @@ def login_customer():
 
     return render_template('login_customer.html')
 
+
 @app.route('/signup_customer', methods=['GET', 'POST'])
 def signup_customer():
     if request.method == 'POST':
@@ -140,6 +141,19 @@ def signup_customer():
 
         if len(phone) != 10 or not phone.isdigit():
             return jsonify({"success": False, "message": "Phone number must be 10 digits"}), 400
+
+        # Password validation (server-side)
+        if len(password) < 8 or len(password) > 12:
+            return jsonify({"success": False, "message": "Password must be 8-12 characters"}), 400
+        
+        if not re.search(r'[A-Z]', password) or not re.search(r'[a-z]', password):
+            return jsonify({"success": False, "message": "Password must contain both uppercase and lowercase letters"}), 400
+        
+        if not re.search(r'\d', password):
+            return jsonify({"success": False, "message": "Password must contain at least one number"}), 400
+        
+        if not re.search(r'[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]', password):
+            return jsonify({"success": False, "message": "Password must contain at least one special character"}), 400
 
         connection = None
         try:
@@ -186,7 +200,8 @@ def signup_customer():
             if connection and connection.is_connected():
                 cursor.close()
                 connection.close()
-
+    
+    # Handle GET request - render the signup form
     return render_template('signup_customer.html')
 
 @app.route('/reset_password', methods=['POST'])
@@ -201,10 +216,29 @@ def reset_password_customer():
             'message': 'Email and new password are required'
         }), 400
 
-    if len(new_password) > 15:
+    # Password validation (same as signup)
+    if len(new_password) < 8 or len(new_password) > 12:
         return jsonify({
             'success': False,
-            'message': 'Password must be 15 characters or less'
+            'message': 'Password must be 8-12 characters'
+        }), 400
+    
+    if not re.search(r'[A-Z]', new_password) or not re.search(r'[a-z]', new_password):
+        return jsonify({
+            'success': False,
+            'message': 'Password must contain both uppercase and lowercase letters'
+        }), 400
+    
+    if not re.search(r'\d', new_password):
+        return jsonify({
+            'success': False,
+            'message': 'Password must contain at least one number'
+        }), 400
+    
+    if not re.search(r'[!@#$%^&*()_+\-=\[\]{};\':"\\|,.<>\/?]', new_password):
+        return jsonify({
+            'success': False,
+            'message': 'Password must contain at least one special character'
         }), 400
 
     connection = None
@@ -212,16 +246,18 @@ def reset_password_customer():
         connection = create_connection()
         cursor = connection.cursor()
 
-        # Fixed column name from cemail to email
-        query = "UPDATE customer SET cpassword = %s WHERE email = %s"
-        cursor.execute(query, (new_password, email))
-        connection.commit()
-
-        if cursor.rowcount == 0:
+        # Check if email exists
+        cursor.execute("SELECT email FROM customer WHERE email = %s", (email,))
+        if not cursor.fetchone():
             return jsonify({
                 'success': False,
                 'message': 'Customer not found'
             }), 404
+
+        # Update password
+        query = "UPDATE customer SET cpassword = %s WHERE email = %s"
+        cursor.execute(query, (new_password, email))
+        connection.commit()
 
         return jsonify({
             'success': True,
@@ -669,34 +705,49 @@ def customer_history():
 @app.route('/update_password_owner', methods=['GET', 'POST'])
 def update_password_owner():
     if request.method == 'POST':
-        data = request.form
-        username = data.get('owner_name')
-        new_password = data.get('new_password')
+        username = request.form.get('owner_name')
+        new_password = request.form.get('new_password')
 
         if not all([username, new_password]):
-            return redirect(url_for('login_spazaOwner', message="Username and new password are required"))
+            return redirect(url_for('update_password_owner', message="Username and new password are required"))
 
-        if len(new_password) > 15:
-            return redirect(url_for('login_spazaOwner', message="Password must be 15 characters or less"))
+        # Password validation
+        if len(new_password) < 8 or len(new_password) > 12:
+            return redirect(url_for('update_password_owner', message="Password must be 8-12 characters"))
+        
+        if not re.search(r'[A-Z]', new_password) or not re.search(r'[a-z]', new_password):
+            return redirect(url_for('update_password_owner', message="Password must contain both uppercase and lowercase letters"))
+        
+        if not re.search(r'\d', new_password):
+            return redirect(url_for('update_password_owner', message="Password must contain at least one number"))
+        
+        if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'"\\|,.<>\/?]', new_password):
+            return redirect(url_for('update_password_owner', message="Password must contain at least one special character"))
 
         connection = None
         try:
             connection = create_connection()
             cursor = connection.cursor()
 
+            # Check if owner exists
+            cursor.execute("SELECT owner_id FROM spaza_owner WHERE oname = %s", (username,))
+            if not cursor.fetchone():
+                return redirect(url_for('update_password_owner', message="Shop owner not found"))
+
+            # Update password
             query = "UPDATE spaza_owner SET opassword = %s WHERE oname = %s"
             cursor.execute(query, (new_password, username))
             connection.commit()
 
             if cursor.rowcount == 0:
-                return redirect(url_for('login_spazaOwner', message="Shop owner not found"))
+                return redirect(url_for('update_password_owner', message="Password update failed"))
 
             return redirect(url_for('login_spazaOwner', message="Password updated successfully"))
 
         except Error as e:
             if connection:
                 connection.rollback()
-            return redirect(url_for('login_spazaOwner', message=f"Error: {str(e)}"))
+            return redirect(url_for('update_password_owner', message=f"Error: {str(e)}"))
 
         finally:
             if connection and connection.is_connected():
@@ -705,45 +756,59 @@ def update_password_owner():
 
     return render_template('update_passwordo.html')
 
-
 @app.route('/update_password_manufacturer', methods=['GET', 'POST'])
 def update_password_manufacturer():
-            if request.method == 'POST':
-                data = request.form
-                license_key = data.get('license_key')
-                new_password = data.get('new_password')
+    if request.method == 'POST':
+        license_key = request.form.get('license_key')
+        new_password = request.form.get('new_password')
 
-                if not all([license_key, new_password]):
-                    return redirect(url_for('login_manufacturer', message="License key and new password are required"))
+        if not all([license_key, new_password]):
+            return redirect(url_for('update_password_manufacturer', message="License key and new password are required"))
 
-                if len(new_password) > 15:
-                    return redirect(url_for('login_manufacturer', message="Password must be 15 characters or less"))
+        # Password validation
+        if len(new_password) < 8 or len(new_password) > 12:
+            return redirect(url_for('update_password_manufacturer', message="Password must be 8-12 characters"))
+        
+        if not re.search(r'[A-Z]', new_password) or not re.search(r'[a-z]', new_password):
+            return redirect(url_for('update_password_manufacturer', message="Password must contain both uppercase and lowercase letters"))
+        
+        if not re.search(r'\d', new_password):
+            return redirect(url_for('update_password_manufacturer', message="Password must contain at least one number"))
+        
+        if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'"\\|,.<>\/?]', new_password):
+            return redirect(url_for('update_password_manufacturer', message="Password must contain at least one special character"))
 
-                connection = None
-                try:
-                    connection = create_connection()
-                    cursor = connection.cursor()
+        connection = None
+        try:
+            connection = create_connection()
+            cursor = connection.cursor()
 
-                    query = "UPDATE manufacturer SET mpassword = %s WHERE license_key = %s"
-                    cursor.execute(query, (new_password, license_key))
-                    connection.commit()
+            # Check if manufacturer exists
+            cursor.execute("SELECT license_key FROM manufacturer WHERE license_key = %s", (license_key,))
+            if not cursor.fetchone():
+                return redirect(url_for('update_password_manufacturer', message="Manufacturer not found"))
 
-                    if cursor.rowcount == 0:
-                        return redirect(url_for('login_manufacturer', message="Manufacturer not found"))
+            # Update password
+            query = "UPDATE manufacturer SET mpassword = %s WHERE license_key = %s"
+            cursor.execute(query, (new_password, license_key))
+            connection.commit()
 
-                    return redirect(url_for('login_manufacturer', message="Password updated successfully"))
+            if cursor.rowcount == 0:
+                return redirect(url_for('update_password_manufacturer', message="Password update failed"))
 
-                except Error as e:
-                    if connection:
-                        connection.rollback()
-                    return redirect(url_for('login_manufacturer', message=f"Error: {str(e)}"))
+            return redirect(url_for('login_manufacturer', message="Password updated successfully"))
 
-                finally:
-                    if connection and connection.is_connected():
-                        cursor.close()
-                        connection.close()
+        except Error as e:
+            if connection:
+                connection.rollback()
+            return redirect(url_for('update_password_manufacturer', message=f"Error: {str(e)}"))
 
-            return render_template('update_password.html')
+        finally:
+            if connection and connection.is_connected():
+                cursor.close()
+                connection.close()
+
+    return render_template('update_password.html')
 
 @app.route('/')
 def home():
@@ -908,6 +973,31 @@ def signup_manufacturer():
                 "message": "All fields are required"
             }), 400
 
+        # Password validation
+        if len(password) < 8 or len(password) > 12:
+            return jsonify({
+                "success": False,
+                "message": "Password must be 8-12 characters"
+            }), 400
+        
+        if not re.search(r'[A-Z]', password) or not re.search(r'[a-z]', password):
+            return jsonify({
+                "success": False,
+                "message": "Password must contain both uppercase and lowercase letters"
+            }), 400
+        
+        if not re.search(r'\d', password):
+            return jsonify({
+                "success": False,
+                "message": "Password must contain at least one number"
+            }), 400
+        
+        if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'"\\|,.<>\/?]', password):
+            return jsonify({
+                "success": False,
+                "message": "Password must contain at least one special character"
+            }), 400
+
         connection = None
         try:
             connection = create_connection()
@@ -968,11 +1058,30 @@ def signup_spazaOwner():
                 "message": f"Missing required fields: {', '.join(missing_fields)}"
             }), 400
 
-        # Validate password length
-        if len(form_data['opassword']) > 15:
+        # Password validation
+        password = form_data['opassword']
+        if len(password) < 8 or len(password) > 12:
             return jsonify({
                 "success": False,
-                "message": "Password must be 15 characters or less"
+                "message": "Password must be 8-12 characters"
+            }), 400
+        
+        if not re.search(r'[A-Z]', password) or not re.search(r'[a-z]', password):
+            return jsonify({
+                "success": False,
+                "message": "Password must contain both uppercase and lowercase letters"
+            }), 400
+        
+        if not re.search(r'\d', password):
+            return jsonify({
+                "success": False,
+                "message": "Password must contain at least one number"
+            }), 400
+        
+        if not re.search(r'[!@#$%^&*()_+\-=\[\]{};:\'"\\|,.<>\/?]', password):
+            return jsonify({
+                "success": False,
+                "message": "Password must contain at least one special character"
             }), 400
 
         connection = None
@@ -1044,6 +1153,7 @@ def signup_spazaOwner():
                 connection.close()
 
     return render_template('signup_spazaOwner.html')
+
 @app.route('/logout_manufacturer', methods=['POST'])
 def logout_manufacturer():
     # Clear any manufacturer session data if needed
@@ -1063,18 +1173,18 @@ def manudashboard():
 
 # Update the product database with more products
 PRODUCT_DATABASE = {
-    '6009644140053': {
-        'prod_name': 'Olive Oil',
-        'prod_price': 64.00,
-        'prod_expiry_date': '2027-03-12',
-        'prod_manu_date': '2025-03-14',
+    '6001052001049': {
+        'prod_name': 'Bokomo Weet-Bix',
+        'prod_price': 55.00,
+        'prod_expiry_date': '2025-06-20',
+        'prod_manu_date': '2025-03-25',
         'prod_quantity': 50,
     },
     '6001038284909': {
-        'prod_name': 'Garlic Salt',
-        'prod_price': 35.00,
-        'prod_expiry_date': '2025-06-15',
-        'prod_manu_date': '2023-04-25',
+        'prod_name': 'Jungle Oats',
+        'prod_price': 48.00,
+        'prod_expiry_date': '2026-03-04',
+        'prod_manu_date': '2025-03-03',
         'prod_quantity': 100
     },
     '6002310013569': {
@@ -1118,7 +1228,35 @@ PRODUCT_DATABASE = {
         'prod_expiry_date': '2026-10-16',
         'prod_manu_date': '2024-10-16',
         'prod_quantity': 100
-    }
+    },
+    '6001087359610': {
+        'prod_name': 'Knorr Rich Oxtail Soup',
+        'prod_price': 7.00,
+        'prod_expiry_date': '2026-01-11',
+        'prod_manu_date': '2024-01-16',
+        'prod_quantity': 100
+    },
+    '6009708461902': {
+        'prod_name': 'Nutriday Strawberry Yoghurt',
+        'prod_price': 26.00,
+        'prod_expiry_date': '2025-06-28',
+        'prod_manu_date': '2025-04-28',
+        'prod_quantity': 100
+    },
+    '6001323106718': {
+        'prod_name': 'Golden Star Instant Yeast',
+        'prod_price': 6.00,
+        'prod_expiry_date': '2025-06-28',
+        'prod_manu_date': '2025-04-28',
+        'prod_quantity': 100
+    },
+    '6001056453004': {
+        'prod_name': 'Blue Label Marie Biscuits',
+        'prod_price': 22.00,
+        'prod_expiry_date': '2025-06-30',
+        'prod_manu_date': '2025-04-28',
+        'prod_quantity': 50
+    },
 }
 
 #duplicate get product for spazashop view
@@ -1306,6 +1444,7 @@ def update_product():
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
+            
 # ADD the delete route for the manufacturer here
 @app.route('/delete_product/<barcode>', methods=['DELETE'])
 def delete_product(barcode):

@@ -7,6 +7,46 @@
   <title>Customer Sign Up - Safe.Spaza</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    /* Add strength bar styles */
+    .strength-meter {
+      height: 5px;
+      background: #ddd;
+      border-radius: 3px;
+      margin-top: 5px;
+      overflow: hidden;
+    }
+
+    .strength-bar {
+      height: 100%;
+      width: 0%;
+      background: #e74c3c;
+      transition: width 0.3s, background 0.3s;
+    }
+
+    .requirements {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+      text-align: left;
+    }
+
+    .requirement {
+      margin: 3px 0;
+    }
+
+    .requirement i {
+      width: 15px;
+      display: inline-block;
+    }
+
+    .valid {
+      color: #28a745;
+    }
+
+    .invalid {
+      color: #dc3545;
+    }
+
     body {
       font-family: Arial, sans-serif;
       background-image: url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
@@ -112,8 +152,7 @@
   <div class="signup-container">
     <h2><i class="fas fa-user-plus"></i> Customer Sign Up</h2>
 
-    <!-- ✅ Form with ID -->
-    <form method="POST" action="/signup_customer">
+    <form method="POST" action="/signup_customer" id="signupForm">
       <div class="form-group">
         <label for="email">Email Address</label>
         <input type="email" name="email" required placeholder="Enter your email">
@@ -122,20 +161,31 @@
         <label for="phone">Phone Number</label>
         <input type="tel" id="phone" name="phone" pattern="\d{10}" maxlength="10" minlength="10" required
           placeholder="Enter your 10-digit phone number" title="Phone number must be exactly 10 digits">
-
       </div>
       <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" name="password" required placeholder="Enter your password">
+        <input type="password" name="password" id="password" required placeholder="Enter your password">
+
+        <!-- Password strength meter -->
+        <div class="strength-meter">
+          <div class="strength-bar" id="strengthBar"></div>
+        </div>
+
+        <!-- Password requirements -->
+        <div class="requirements">
+          <div class="requirement" id="lengthReq"><i class="fas fa-circle"></i> 8-12 characters</div>
+          <div class="requirement" id="caseReq"><i class="fas fa-circle"></i> Upper & lowercase letters</div>
+          <div class="requirement" id="numberReq"><i class="fas fa-circle"></i> At least one number</div>
+          <div class="requirement" id="specialReq"><i class="fas fa-circle"></i> At least one special character</div>
+        </div>
       </div>
       <div class="form-group">
         <label for="confirm">Confirm Password</label>
-        <input type="password" name="confirm" required placeholder="Confirm your password">
+        <input type="password" name="confirm" id="confirmPassword" required placeholder="Confirm your password">
       </div>
       <button type="submit"><i class="fas fa-user-plus"></i> Sign Up</button>
     </form>
 
-    <!-- ✅ Message box for feedback -->
     <div id="messageBox"></div>
 
     <div class="back-link">
@@ -143,6 +193,105 @@
     </div>
   </div>
 </body>
+
+<script>
+  // Password validation function
+  function validatePassword(password) {
+    const requirements = {
+      length: password.length >= 8 && password.length <= 12,
+      upperCase: /[A-Z]/.test(password),
+      lowerCase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      specialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+    };
+
+    return requirements;
+  }
+
+  // Update password strength indicator
+  function updatePasswordStrength(password) {
+    const requirements = validatePassword(password);
+    let strength = 0;
+
+    // Count fulfilled requirements
+    Object.values(requirements).forEach(met => {
+      if (met) strength++;
+    });
+
+    // Update strength bar
+    const strengthBar = document.getElementById('strengthBar');
+    const colors = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#27ae60'];
+    const width = strength * 25;
+
+    strengthBar.style.width = `${width}%`;
+    strengthBar.style.backgroundColor = colors[strength];
+
+    // Update requirement indicators
+    document.getElementById('lengthReq').className = requirements.length ?
+      'requirement valid' : 'requirement invalid';
+    document.getElementById('caseReq').className = (requirements.upperCase && requirements.lowerCase) ?
+      'requirement valid' : 'requirement invalid';
+    document.getElementById('numberReq').className = requirements.number ?
+      'requirement valid' : 'requirement invalid';
+    document.getElementById('specialReq').className = requirements.specialChar ?
+      'requirement valid' : 'requirement invalid';
+
+    return strength === 4; // All requirements met
+  }
+
+  // Event listeners
+  document.getElementById('password').addEventListener('input', function (e) {
+    updatePasswordStrength(e.target.value);
+  });
+
+  document.getElementById('signupForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const messageBox = document.getElementById('messageBox');
+
+    // Reset message box
+    messageBox.innerHTML = '';
+    messageBox.className = '';
+
+    // Check if passwords match
+    if (password !== confirmPassword) {
+      messageBox.innerHTML = 'Passwords do not match!';
+      messageBox.style.color = '#dc3545';
+      return;
+    }
+
+    // Check password strength
+    const requirements = validatePassword(password);
+    const allMet = Object.values(requirements).every(met => met);
+
+    if (!allMet) {
+      messageBox.innerHTML = 'Password does not meet requirements!';
+      messageBox.style.color = '#dc3545';
+      return;
+    }
+
+    // If validations pass, submit form
+    const formData = new FormData(this);
+    const response = await fetch(this.action, {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert(result.message);
+      if (result.redirect) {
+        window.location.href = result.redirect;
+      }
+    } else {
+      alert(result.message);
+    }
+  });
+</script>
+
 <script>
   document.querySelector('form').addEventListener('submit', async function (e) {
     e.preventDefault();

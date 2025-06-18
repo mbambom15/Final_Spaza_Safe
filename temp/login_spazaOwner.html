@@ -7,6 +7,41 @@
   <title>Login - ShopOwner</title>
   <style>
     body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-image: url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: #333;
+      position: relative;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: -1;
+    }
+
+    .login-container {
+      background-color: rgba(255, 255, 255, 0.95);
+      /* rest of your styles */
+      z-index: 1;
+      /* Ensure it's above the overlay */
+    }
+
+    body {
       font-family: Arial, sans-serif;
       background-color: #f2f2f2;
       margin: 0;
@@ -79,105 +114,105 @@
   </div>
   <script>
     function addSelectedToInventory() {
-    const checkboxes = document.querySelectorAll('.product-item input[type="checkbox"]:checked');
-    const registration_no = 1; // This should come from session or shop owner data
-    
-    if (checkboxes.length === 0) {
+      const checkboxes = document.querySelectorAll('.product-item input[type="checkbox"]:checked');
+      const registration_no = 1; // This should come from session or shop owner data
+
+      if (checkboxes.length === 0) {
         alert('Please select at least one product');
         return;
-    }
-    
-    const productsToAdd = [];
-    
-    checkboxes.forEach(checkbox => {
+      }
+
+      const productsToAdd = [];
+
+      checkboxes.forEach(checkbox => {
         const barcode = checkbox.dataset.barcode;
         const price = parseFloat(document.getElementById(`price_${barcode}`).value);
         const quantity = parseInt(document.getElementById(`qty_${barcode}`).value);
-        
+
         // Validate inputs
         if (isNaN(price) || price <= 0) {
-            alert(`Invalid price for product ${barcode}`);
-            return;
+          alert(`Invalid price for product ${barcode}`);
+          return;
         }
         if (isNaN(quantity) || quantity <= 0) {
-            alert(`Invalid quantity for product ${barcode}`);
-            return;
+          alert(`Invalid quantity for product ${barcode}`);
+          return;
         }
-        
+
         productsToAdd.push({
-            registration_no: registration_no,
-            prod_barcode: barcode,
-            shop_price: price,
-            stock_quantity: quantity
+          registration_no: registration_no,
+          prod_barcode: barcode,
+          shop_price: price,
+          stock_quantity: quantity
         });
-    });
-    
-    // Send data to server
-    fetch('/add_to_inventory', {
+      });
+
+      // Send data to server
+      fetch('/add_to_inventory', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify(productsToAdd)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
             // Show detailed results for each product
             let message = "Inventory update results:\n";
             data.results.forEach(result => {
-                message += `${result.product}: ${result.message}\n`;
+              message += `${result.product}: ${result.message}\n`;
             });
             alert(message);
-            
+
             // Uncheck all checkboxes after successful addition
             checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
+              checkbox.checked = false;
             });
-        } else {
+          } else {
             alert('Some operations failed: ' + data.message);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Failed to update inventory');
-    });
-}
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Failed to update inventory');
+        });
+    }
     // Event listener for the login form submission
     const loginForm = document.getElementById('loginForm');
-    
-    loginForm.addEventListener('submit', async function(event) {
+
+    loginForm.addEventListener('submit', async function (event) {
       event.preventDefault(); // Prevent the default form submission
-      
+
       // Create a message element for feedback
       const messageDiv = document.createElement('div');
       messageDiv.style.margin = '10px 0';
       messageDiv.style.padding = '10px';
       messageDiv.style.borderRadius = '5px';
-      
+
       try {
         // Get form data
         const formData = new FormData(loginForm);
-        
+
         // Send login request to server
         const response = await fetch('/login_spazaOwner', {
           method: 'POST',
           body: formData
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
           // Login successful - show success message
           messageDiv.textContent = "Login successful! Redirecting...";
           messageDiv.style.backgroundColor = '#d4edda';
           messageDiv.style.color = '#155724';
-          
+
           // Store user data in sessionStorage
           if (data.user) {
             sessionStorage.setItem('shopOwner', JSON.stringify(data.user));
           }
-          
+
           // Redirect to dashboard after 1 second
           setTimeout(() => {
             window.location.href = data.redirect || '/shopowner';
@@ -188,15 +223,15 @@
           messageDiv.style.backgroundColor = '#f8d7da';
           messageDiv.style.color = '#721c24';
         }
-        
+
         // Remove any existing messages
         const existingMessage = document.querySelector('.login-message');
         if (existingMessage) existingMessage.remove();
-        
+
         // Add the message to the DOM
         messageDiv.classList.add('login-message');
         loginForm.parentNode.insertBefore(messageDiv, loginForm.nextSibling);
-        
+
       } catch (error) {
         console.error('Login error:', error);
         alert('An error occurred during login. Please try again.');
