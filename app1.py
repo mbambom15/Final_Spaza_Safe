@@ -1180,7 +1180,7 @@ PRODUCT_DATABASE = {
         'prod_manu_date': '2025-03-25',
         'prod_quantity': 50,
     },
-    '6001038284909': {
+    '6001275000003': {
         'prod_name': 'Jungle Oats',
         'prod_price': 48.00,
         'prod_expiry_date': '2026-03-04',
