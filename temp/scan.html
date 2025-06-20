@@ -58,6 +58,8 @@
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             margin-bottom: 1.5rem;
+            flex-direction: column;
+            align-items: flex-start;
         }
 
         .product-stock {
@@ -164,12 +166,13 @@
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             background: #000;
+            height: 400px;
+            /* Increased from 300px */
         }
 
         #interactive {
             width: 100%;
-            height: 300px;
-            position: relative;
+            height: 100%
         }
 
         .controls {
@@ -234,9 +237,56 @@
 
         .product-table th,
         .product-table td {
-            padding: 0.75rem;
-            text-align: left;
+            padding: 0.5rem;
+            border: none;
             border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        /* Better wrapping for dates */
+        .product-table td {
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        .product-table th:nth-child(1) {
+            grid-area: 1/1;
+        }
+
+        .product-table td:nth-child(1) {
+            grid-area: 2/1;
+        }
+
+        .product-table th:nth-child(2) {
+            grid-area: 1/2;
+        }
+
+        .product-table td:nth-child(2) {
+            grid-area: 2/2;
+        }
+
+        .product-table th:nth-child(3) {
+            grid-area: 3/1;
+        }
+
+        .product-table td:nth-child(3) {
+            grid-area: 4/1;
+        }
+
+        .product-table th:nth-child(4) {
+            grid-area: 3/2;
+        }
+
+        .product-table td:nth-child(4) {
+            grid-area: 4/2;
+        }
+
+        .product-table th:nth-child(5) {
+            grid-area: 5/1;
+        }
+
+        .product-table td:nth-child(5) {
+            grid-area: 6/1;
         }
 
         .product-table th {
@@ -364,7 +414,7 @@
             }
 
             #interactive {
-                height: 250px;
+                height: 60vh;
             }
 
             .controls {
@@ -375,6 +425,11 @@
                 width: 100%;
             }
 
+            button {
+                padding: 1rem;
+                font-size: 1.1rem;
+            }
+
             .input-group {
                 flex-direction: column;
             }
@@ -382,6 +437,11 @@
             .input-group button {
                 width: 100%;
             }
+        }
+
+        .product-table thead,
+        .product-table tr {
+            display: contents;
         }
 
         /*product image css*/
@@ -397,6 +457,7 @@
             justify-content: center;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             margin-right: 20px;
+            margin-bottom: 1rem;
         }
 
         .product-image-box img {

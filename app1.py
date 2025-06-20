@@ -973,6 +973,33 @@ def signup_manufacturer():
                 "message": "All fields are required"
             }), 400
 
+        # Enhanced license key validation
+        if not license_key.isdigit():
+            return jsonify({
+                "success": False,
+                "message": "License Key must contain only numbers"
+            }), 400
+            
+        try:
+            license_num = int(license_key)
+        except ValueError:
+            return jsonify({
+                "success": False,
+                "message": "Invalid License Key format"
+            }), 400
+            
+        if license_num < 0:
+            return jsonify({
+                "success": False,
+                "message": "License Key cannot be negative"
+            }), 400
+            
+        if len(license_key) < 4:
+            return jsonify({
+                "success": False,
+                "message": "License Key must be at least 4 digits"
+            }), 400
+
         # Password validation
         if len(password) < 8 or len(password) > 12:
             return jsonify({
@@ -1003,19 +1030,20 @@ def signup_manufacturer():
             connection = create_connection()
             cursor = connection.cursor()
 
-            cursor.execute("SELECT license_key FROM manufacturer WHERE license_key = %s", (license_key,))
+            # Check for existing license key
+            cursor.execute("SELECT license_key FROM manufacturer WHERE license_key = %s", (license_num,))
             if cursor.fetchone():
                 return jsonify({
                     "success": False,
                     "message": "License key already registered"
                 }), 400
 
-            # creationdate will be automatically set by DEFAULT CURRENT_TIMESTAMP
+            # Insert new manufacturer
             query = """
                 INSERT INTO manufacturer (license_key, company_name, address, location, mpassword)
                 VALUES (%s, %s, %s, %s, %s)
             """
-            cursor.execute(query, (license_key, company_name, address, location, password))
+            cursor.execute(query, (license_num, company_name, address, location, password))
             connection.commit()
 
             return jsonify({
@@ -1966,9 +1994,9 @@ def add_to_shop_inventory():
         connection = create_connection()
         cursor = connection.cursor()
 
-        # Check if product exists and isn't expired
+        # Get manufacturer price and current quantity
         cursor.execute("""
-            SELECT prod_quantity, prod_expiry_date 
+            SELECT prod_quantity, prod_expiry_date, prod_price 
             FROM product 
             WHERE prod_barcode = %s
         """, (prod_barcode,))
@@ -1980,7 +2008,10 @@ def add_to_shop_inventory():
                 "message": "Product does not exist in system"
             }), 404
             
-        available_quantity, expiry_date = product
+        available_quantity, expiry_date, manufacturer_price = product
+        
+        # Convert Decimal to float for calculations
+        manufacturer_price = float(manufacturer_price)
         
         # Check if product is expired
         if expiry_date and expiry_date < datetime.now().date():
@@ -1995,6 +2026,18 @@ def add_to_shop_inventory():
                 "success": False,
                 "message": f"Not enough stock available. Only {available_quantity} units in system",
                 "available_quantity": available_quantity
+            }), 400
+
+        # Calculate maximum allowed price (50% markup)
+        max_allowed_price = manufacturer_price * 1.5
+        
+        # Check if shop price exceeds 50% markup
+        if float(shop_price) > max_allowed_price:
+            return jsonify({
+                "success": False,
+                "message": f"Price exceeds maximum allowed markup (50%). Max allowed: R{max_allowed_price:.2f}",
+                "manufacturer_price": manufacturer_price,
+                "max_allowed": max_allowed_price
             }), 400
 
         # Check if this product already exists in this shop's inventory

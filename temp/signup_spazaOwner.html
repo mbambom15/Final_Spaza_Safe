@@ -8,7 +8,10 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f2f2f2;
+      background-image: url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'); /* Added background image */
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       margin: 0;
       padding: 0;
       display: flex;
@@ -155,7 +158,8 @@
       </div>
     </div>
     <div class="form-group">
-      <input type="tel" name="phone_number" placeholder="Phone Number" required>
+      <input type="tel" name="phone_number" placeholder="Phone Number" pattern="\d{10}" maxlength="10" minlength="10" required
+          placeholder="Enter your 10-digit phone number" title="Phone number must be exactly 10 digits">
     </div>
     <div class="form-group">
       <input type="text" name="business_name" placeholder="Business Name" required>

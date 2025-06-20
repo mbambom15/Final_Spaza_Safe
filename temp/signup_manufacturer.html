@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,10 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f2f2f2;
+      background-image: url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       margin: 0;
       padding: 0;
       display: flex;
@@ -18,8 +22,22 @@
       text-align: center;
     }
 
+    form {
+      background-color: rgba(255, 255, 255, 0.9);
+      /* light background with transparency */
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      max-width: 400px;
+      width: 90%;
+      margin: auto;
+    }
+
     h1 {
-      color: #333;
+      color: #fff;
+      /* White title text */
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+      margin-bottom: 20px;
     }
 
     .form-group {
@@ -53,15 +71,15 @@
     }
 
     a {
-      text-decoration: none;
-      color: #28a745;
+      color: #fff;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+      margin-top: 10px;
+      display: inline-block;
     }
 
     #message {
-      margin: 15px 0;
-      padding: 10px;
-      border-radius: 5px;
-      display: none;
+      max-width: 400px;
+      text-align: center;
     }
 
     .success {
@@ -73,7 +91,7 @@
       background-color: #f8d7da;
       color: #721c24;
     }
-    
+
     /* Password strength meter */
     .strength-meter {
       height: 5px;
@@ -82,37 +100,43 @@
       margin-top: 5px;
       overflow: hidden;
     }
-    
+
     .strength-bar {
       height: 100%;
       width: 0%;
       background: #e74c3c;
       transition: width 0.3s, background 0.3s;
     }
-    
+
+    input,
+    button {
+      width: 100%;
+      max-width: 300px;
+    }
+
     /* Password requirements */
     .requirements {
       font-size: 12px;
-      color: #666;
+      color: #333;
       margin-top: 5px;
       text-align: left;
       width: 300px;
       margin: 5px auto;
     }
-    
+
     .requirement {
       margin: 3px 0;
     }
-    
+
     .requirement i {
       width: 15px;
       display: inline-block;
     }
-    
+
     .valid {
       color: #28a745;
     }
-    
+
     .invalid {
       color: #dc3545;
     }
@@ -122,12 +146,13 @@
 <body>
 
   <h1>Manufacturer Sign Up</h1>
-  
+
   <div id="message"></div>
 
   <form id="signupForm">
     <div class="form-group">
-      <input type="text" name="license_key" placeholder="LicenseKey" required>
+      <input type="text" name="license_key" placeholder="License Key (4+ digits)" required pattern="\d{4,}"
+        title="License Key must be at least 4 digits">
     </div>
 
     <div class="form-group">
@@ -144,12 +169,12 @@
 
     <div class="form-group">
       <input type="password" name="password" id="password" placeholder="Password" required>
-      
+
       <!-- Password strength meter -->
       <div class="strength-meter">
         <div class="strength-bar" id="strengthBar"></div>
       </div>
-      
+
       <!-- Password requirements -->
       <div class="requirements">
         <div class="requirement" id="lengthReq"><i class="fas fa-circle"></i> 8-12 characters</div>
@@ -173,80 +198,80 @@
         number: /\d/.test(password),
         specialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
       };
-      
+
       return requirements;
     }
-    
+
     // Update password strength indicator
     function updatePasswordStrength(password) {
       const requirements = validatePassword(password);
       let strength = 0;
-      
+
       // Count fulfilled requirements
       Object.values(requirements).forEach(met => {
         if (met) strength++;
       });
-      
+
       // Update strength bar
       const strengthBar = document.getElementById('strengthBar');
       const colors = ['#e74c3c', '#e67e22', '#f1c40f', '#2ecc71', '#27ae60'];
       const width = strength * 25;
-      
+
       strengthBar.style.width = `${width}%`;
       strengthBar.style.backgroundColor = colors[strength];
-      
+
       // Update requirement indicators
-      document.getElementById('lengthReq').className = requirements.length ? 
+      document.getElementById('lengthReq').className = requirements.length ?
         'requirement valid' : 'requirement invalid';
-      document.getElementById('caseReq').className = (requirements.upperCase && requirements.lowerCase) ? 
+      document.getElementById('caseReq').className = (requirements.upperCase && requirements.lowerCase) ?
         'requirement valid' : 'requirement invalid';
-      document.getElementById('numberReq').className = requirements.number ? 
+      document.getElementById('numberReq').className = requirements.number ?
         'requirement valid' : 'requirement invalid';
-      document.getElementById('specialReq').className = requirements.specialChar ? 
+      document.getElementById('specialReq').className = requirements.specialChar ?
         'requirement valid' : 'requirement invalid';
-      
+
       return strength === 4; // All requirements met
     }
-    
+
     // Event listener for password input
-    document.getElementById('password').addEventListener('input', function(e) {
+    document.getElementById('password').addEventListener('input', function (e) {
       updatePasswordStrength(e.target.value);
     });
 
-    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+    document.getElementById('signupForm').addEventListener('submit', async function (e) {
       e.preventDefault();
-      
+
       const formData = new FormData(this);
       const password = document.getElementById('password').value;
       const messageDiv = document.getElementById('message');
-      
+
       // Hide previous messages
       messageDiv.style.display = 'none';
-      
+
       // Check password strength
       const requirements = validatePassword(password);
       const allMet = Object.values(requirements).every(met => met);
-      
+
       if (!allMet) {
         messageDiv.textContent = 'Password does not meet requirements!';
         messageDiv.className = 'error';
         messageDiv.style.display = 'block';
         return;
       }
-      
+
       try {
         const response = await fetch('/signup_manufacturer', {
           method: 'POST',
           body: formData
         });
-        
+
         const data = await response.json();
-        
+
         if (data.success) {
           messageDiv.textContent = data.message;
           messageDiv.className = 'success';
           messageDiv.style.display = 'block';
-          
+
           // Redirect after 2 seconds
           setTimeout(() => {
             window.location.href = data.redirect;
@@ -264,8 +289,9 @@
       }
     });
   </script>
-  
+
   <!-- Font Awesome for icons -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
 </body>
+
 </html>

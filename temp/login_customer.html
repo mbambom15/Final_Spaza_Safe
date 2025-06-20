@@ -8,40 +8,38 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-image: url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      color: #333;
-      position: relative;
-    }
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-image: url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    color: #333;
+    position: relative;
+  }
 
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: -1;
-    }
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+  }
 
-    .login-container {
-      background-color: rgba(255, 255, 255, 0.95);
-      /* rest of your styles */
-      z-index: 1;
-      /* Ensure it's above the overlay */
-    }
-
+  .login-container {
+    background-color: rgba(255, 255, 255, 0.95);
+    /* rest of your styles */
+    z-index: 1; /* Ensure it's above the overlay */
+  }
     body {
       font-family: Arial, sans-serif;
       background-image: url('https://images.unsplash.com/photo-1604719312566-8912e9227c6a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
@@ -97,7 +95,7 @@
       transition: transform 0.4s ease;
       z-index: 10;
     }
-
+    
     .forgot-container.active {
       transform: translateX(0);
     }
@@ -265,8 +263,7 @@
         </div>
         <div class="form-group">
           <label for="confirm-password">Confirm Password</label>
-          <input type="password" id="confirm-password" name="confirm_password" required
-            placeholder="Confirm new password">
+          <input type="password" id="confirm-password" name="confirm_password" required placeholder="Confirm new password">
         </div>
         <button type="submit" class="btn-full"><i class="fas fa-sync-alt"></i> Reset Password</button>
       </form>
@@ -279,53 +276,53 @@
 
 <script>
   // Forgot password functionality
-  document.getElementById('forgot-password-link').addEventListener('click', function (e) {
+  document.getElementById('forgot-password-link').addEventListener('click', function(e) {
     e.preventDefault();
     document.getElementById('forgot-container').classList.add('active');
   });
 
-  document.getElementById('close-forgot').addEventListener('click', function () {
+  document.getElementById('close-forgot').addEventListener('click', function() {
     document.getElementById('forgot-container').classList.remove('active');
   });
 
-  document.getElementById('back-to-login').addEventListener('click', function (e) {
+  document.getElementById('back-to-login').addEventListener('click', function(e) {
     e.preventDefault();
     document.getElementById('forgot-container').classList.remove('active');
   });
 
   // Reset password form submission
-  document.getElementById('reset-form').addEventListener('submit', async function (e) {
+  document.getElementById('reset-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-
+    
     const email = document.getElementById('reset-email').value;
     const newPassword = document.getElementById('new-password').value;
     const confirmPassword = document.getElementById('confirm-password').value;
     const messageEl = document.getElementById('reset-message');
-
+    
     // Clear previous messages
     messageEl.style.display = 'none';
-
+    
     // Validate inputs
     if (!email) {
       showMessage('Please enter your email address', 'error');
       return;
     }
-
+    
     if (!newPassword || !confirmPassword) {
       showMessage('Please enter and confirm your new password', 'error');
       return;
     }
-
+    
     if (newPassword !== confirmPassword) {
       showMessage('Passwords do not match', 'error');
       return;
     }
-
+    
     if (newPassword.length > 15) {
       showMessage('Password must be 15 characters or less', 'error');
       return;
     }
-
+    
     try {
       // Send reset request to server
       const response = await fetch('/reset_password', {
@@ -333,14 +330,14 @@
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
+        body: JSON.stringify({ 
           email: email,
-          new_password: newPassword
+          new_password: newPassword 
         })
       });
-
+      
       const result = await response.json();
-
+      
       if (result.success) {
         showMessage(result.message, 'success');
         // Clear form
@@ -366,7 +363,7 @@
   }
 
   // Login form submission (existing)
-  document.querySelector('#login-form form').addEventListener('submit', async function (e) {
+  document.querySelector('#login-form form').addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const formData = new FormData(this);
