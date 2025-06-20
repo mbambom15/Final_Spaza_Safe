@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safe.Spaza - Barcode Scanner</title>
     <style>
+        #productStatusMessage {
+            margin-bottom: 1rem;
+        }
+
         /* Add to existing styles */
         #report-success-popup button {
             padding: 0.8rem 1.5rem;
@@ -625,6 +629,7 @@
     <script>
         // Global variables
         let isScanning = false;
+        let isPaused = false; // Add this with other global variables
 
         // DOM elements
         const startButton = document.getElementById('startButton');
@@ -640,6 +645,8 @@
 
         // Function to initialize the scanner
         function initScanner() {
+            // Reset pause state when restarting
+            isPaused = false;
             if (isScanning) return;
 
             // Check if browser supports camera access
@@ -703,10 +710,16 @@
 
         // Function to handle detected barcodes
         async function handleBarcodeDetection(result) {
-            if (!isScanning) return;
+            if (!isScanning || isPaused) return; // Check pause state
+
+            // Pause scanning immediately after detection
+            isPaused = true;
 
             const code = result.codeResult.code;
             await processBarcode(code);
+
+            // Update status to show paused state
+            updateStatus("Scanner paused. Press 'Start Scanner' to resume", 'scanning');
         }
 
         // Function to process manual barcode entry
@@ -883,7 +896,14 @@
             currentProduct = product;
 
             const manufacturer = data.manufacturer;
-            const store = data.store; // New store information
+            const store = data.store;
+
+            // Create status message element
+            const statusElement = document.createElement('div');
+            statusElement.id = 'productStatusMessage';
+            statusElement.className = 'status status-success';
+            statusElement.style.display = 'block';
+            statusElement.textContent = 'Product found!';
 
             // Create manufacturer info section
             const manufacturerInfo = `
@@ -947,6 +967,9 @@
             </tbody>
         </table>
         <div class="action-buttons" id="actionButtons"></div>`;
+
+            // Insert the status message ABOVE the product info content
+            productInfo.insertBefore(statusElement, productInfo.firstChild);
 
             // Get the action buttons container
             const actionButtons = document.getElementById('actionButtons');
@@ -1343,12 +1366,29 @@
 
         // Function to update status message
         function updateStatus(message, type) {
-            statusMessage.textContent = message;
-            statusMessage.style.display = 'block';
+            // Try to find the product-specific status element
+            let statusElement = document.getElementById('productStatusMessage');
 
-            // Remove all classes and add the appropriate one
-            statusMessage.className = 'status';
-            statusMessage.classList.add(`status-${type}`);
+            // Create it if it doesn't exist
+            if (!statusElement) {
+                statusElement = document.createElement('div');
+                statusElement.id = 'productStatusMessage';
+                statusElement.className = 'status';
+                const container = document.querySelector('.container');
+                const scanner = document.querySelector('.scanner-container');
+                container.insertBefore(statusElement, scanner.nextSibling);
+            }
+
+            // Add pause indicator to status message
+            if (isPaused) {
+                statusElement.innerHTML = message + ' <span style="color:orange;font-weight:bold;">(PAUSED)</span>';
+            } else {
+                statusElement.textContent = message;
+            }
+
+            statusElement.style.display = 'block';
+            statusElement.className = 'status'; // Reset classes
+            statusElement.classList.add(`status-${type}`);
         }
 
         // Function to go back to login

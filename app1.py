@@ -1204,7 +1204,7 @@ PRODUCT_DATABASE = {
     '6001052001049': {
         'prod_name': 'Bokomo Weet-Bix',
         'prod_price': 55.00,
-        'prod_expiry_date': '2025-06-20',
+        'prod_expiry_date': '2025-06-10',
         'prod_manu_date': '2025-03-25',
         'prod_quantity': 50,
     },
@@ -1246,7 +1246,7 @@ PRODUCT_DATABASE = {
     '54490482': {
         'prod_name': 'Powerade Mountain Blast',
         'prod_price': 18.00,
-        'prod_expiry_date': '2025-06-25',
+        'prod_expiry_date': '2025-06-08',
         'prod_manu_date': '2024-06-07',
         'prod_quantity': 50
     },
@@ -1285,6 +1285,21 @@ PRODUCT_DATABASE = {
         'prod_manu_date': '2025-04-28',
         'prod_quantity': 50
     },
+    '6001038284909': {
+        'prod_name': 'Garlic Salt',
+        'prod_price': 22.00,
+        'prod_expiry_date': '2025-06-10',
+        'prod_manu_date': '2025-04-28',
+        'prod_quantity': 50
+    },
+    '6001052001049': {
+        'prod_name': 'Tomato Paste',
+        'prod_price': 10.00,
+        'prod_expiry_date': '2025-09-13',
+        'prod_manu_date': '2024-09-13',
+        'prod_quantity': 50
+    },
+    
 }
 
 #duplicate get product for spazashop view
