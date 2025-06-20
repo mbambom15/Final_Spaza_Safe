@@ -875,7 +875,7 @@
 
                 if (data.product && data.product.prod_barcode) {
                     displayProductInfo(data);
-                    updateStatus("Product found!", 'success');
+                    // REMOVED: updateStatus("Product found!", 'success');
                 } else {
                     updateStatus("Product not found in store inventory", 'error');
                 }
@@ -887,6 +887,7 @@
                 manualBarcodeInput.value = '';
             }
         }
+
         // Add this to your global variables
         let currentProduct = null; // To store the currently displayed product
 
@@ -898,7 +899,7 @@
             const manufacturer = data.manufacturer;
             const store = data.store;
 
-            // Create status message element
+            // Create status message element - KEEP THIS
             const statusElement = document.createElement('div');
             statusElement.id = 'productStatusMessage';
             statusElement.className = 'status status-success';
@@ -1365,30 +1366,38 @@
         }
 
         // Function to update status message
-        function updateStatus(message, type) {
-            // Try to find the product-specific status element
-            let statusElement = document.getElementById('productStatusMessage');
+        function updateStatus(message, type, isProductStatus = false) {
+            if (isProductStatus) {
+                // Handle product-specific status
+                let statusElement = document.getElementById('productStatusMessage');
 
-            // Create it if it doesn't exist
-            if (!statusElement) {
-                statusElement = document.createElement('div');
-                statusElement.id = 'productStatusMessage';
-                statusElement.className = 'status';
-                const container = document.querySelector('.container');
-                const scanner = document.querySelector('.scanner-container');
-                container.insertBefore(statusElement, scanner.nextSibling);
-            }
+                if (!statusElement) {
+                    statusElement = document.createElement('div');
+                    statusElement.id = 'productStatusMessage';
+                    statusElement.className = 'status';
+                    const container = document.querySelector('.container');
+                    const scanner = document.querySelector('.scanner-container');
+                    container.insertBefore(statusElement, scanner.nextSibling);
+                }
 
-            // Add pause indicator to status message
-            if (isPaused) {
-                statusElement.innerHTML = message + ' <span style="color:orange;font-weight:bold;">(PAUSED)</span>';
-            } else {
                 statusElement.textContent = message;
+                statusElement.style.display = 'block';
+                statusElement.className = 'status';
+                statusElement.classList.add(`status-${type}`);
+            } else {
+                // Handle scanner status
+                const statusElement = document.getElementById('statusMessage');
+                if (statusElement) {
+                    if (isPaused) {
+                        statusElement.innerHTML = message + ' <span style="color:orange;font-weight:bold;">(PAUSED)</span>';
+                    } else {
+                        statusElement.textContent = message;
+                    }
+                    statusElement.style.display = 'block';
+                    statusElement.className = 'status';
+                    statusElement.classList.add(`status-${type}`);
+                }
             }
-
-            statusElement.style.display = 'block';
-            statusElement.className = 'status'; // Reset classes
-            statusElement.classList.add(`status-${type}`);
         }
 
         // Function to go back to login
