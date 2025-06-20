@@ -710,16 +710,18 @@
 
         // Function to handle detected barcodes
         async function handleBarcodeDetection(result) {
-            if (!isScanning || isPaused) return; // Check pause state
+            if (!isScanning || isPaused) return;
 
-            // Pause scanning immediately after detection
             isPaused = true;
-
             const code = result.codeResult.code;
             await processBarcode(code);
 
-            // Update status to show paused state
-            updateStatus("Scanner paused. Press 'Start Scanner' to resume", 'scanning');
+            // Only show paused message if no error exists
+            const statusElement = document.getElementById('statusMessage');
+            if (!statusElement.textContent.includes('Error') &&
+                !statusElement.textContent.includes('not found')) {
+                updateStatus("Scanner paused. Press 'Start Scanner' to resume", 'scanning');
+            }
         }
 
         // Function to process manual barcode entry
@@ -869,18 +871,15 @@
 
                 const data = await response.json();
 
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-
                 if (data.product && data.product.prod_barcode) {
                     displayProductInfo(data);
-                    // REMOVED: updateStatus("Product found!", 'success');
                 } else {
+                    // Force this message to stay visible
                     updateStatus("Product not found in store inventory", 'error');
                 }
             } catch (error) {
                 console.error("Error:", error);
+                // Force this error to stay visible
                 updateStatus("Error: " + error.message, 'error');
             } finally {
                 loadingIndicator.style.display = 'none';
@@ -1385,14 +1384,13 @@
                 statusElement.className = 'status';
                 statusElement.classList.add(`status-${type}`);
             } else {
-                // Handle scanner status
                 const statusElement = document.getElementById('statusMessage');
                 if (statusElement) {
-                    if (isPaused) {
-                        statusElement.innerHTML = message + ' <span style="color:orange;font-weight:bold;">(PAUSED)</span>';
-                    } else {
-                        statusElement.textContent = message;
+                    let displayMessage = message;
+                    if (isPaused && !message.includes('(PAUSED)')) {
+                        displayMessage += ' <span style="color:orange;font-weight:bold;">(PAUSED)</span>';
                     }
+                    statusElement.innerHTML = displayMessage;
                     statusElement.style.display = 'block';
                     statusElement.className = 'status';
                     statusElement.classList.add(`status-${type}`);
